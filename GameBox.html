@@ -538,6 +538,83 @@ body.native .tbar{-webkit-app-region:drag}
 body.native .tbar .logo,body.native .tbar .syncpill{-webkit-app-region:no-drag}
 /* the window can be any shape, so let the shelf breathe on short windows */
 @media (max-height:700px){body.native .content{padding:.5cqw .6cqw .7cqw}}
+
+/* ---- the title bar IS the window chrome ---- */
+body.native .wbtns{display:flex}
+body.native .tbar{height:2.4cqw;cursor:default}
+.wbtns{margin-left:.4cqw;display:flex;height:100%;align-items:stretch}
+.wbtns button{all:unset;width:2.9cqw;display:grid;place-items:center;color:var(--tx2);cursor:pointer;
+  transition:background .12s}
+.wbtns button:hover{background:rgba(255,255,255,.12);color:#fff}
+.wbtns button.x:hover{background:#c42b1c;color:#fff}
+.wbtns button:focus-visible{outline:2px solid var(--acc);outline-offset:-3px}
+.wbtns svg{width:.62cqw;height:.62cqw;stroke:currentColor;stroke-width:1.2;fill:none}
+body.native .tbar .logo{cursor:default}
+
+/* ---- first-run setup ---- */
+.setup{position:absolute;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
+  background:radial-gradient(120% 100% at 70% 10%,rgba(255,122,26,.12),transparent 60%),rgba(6,8,13,.86);
+  backdrop-filter:blur(1.6cqw) saturate(130%)}
+.setup.open{display:flex;animation:fadein .25s ease}
+.setuppanel{width:46cqw;max-height:86%;display:flex;flex-direction:column;border-radius:.8cqw;overflow:hidden;
+  background:var(--gs2);border:1px solid var(--edge);box-shadow:var(--hi),0 2cqw 5cqw rgba(0,0,0,.65);
+  animation:pop .3s cubic-bezier(.2,.9,.3,1)}
+.setuptop{display:flex;align-items:center;gap:.7cqw;padding:1cqw 1.2cqw .8cqw}
+.setuptop .mk2{width:2.4cqw;height:2.4cqw;border-radius:.55cqw;flex:none;position:relative;
+  background:linear-gradient(150deg,var(--acc2),var(--acc));box-shadow:0 0 1.4cqw rgba(255,122,26,.5),var(--hi)}
+.setuptop .mk2::before{content:"";position:absolute;left:.42cqw;right:.42cqw;top:.62cqw;bottom:.62cqw;
+  border:.2cqw solid rgba(20,14,8,.85);border-radius:.1cqw}
+.setuptop .mk2::after{content:"";position:absolute;left:.42cqw;right:.42cqw;top:1.08cqw;height:.2cqw;background:rgba(20,14,8,.85)}
+.setuptop h2{margin:0;font-family:var(--disp);font-size:1.35cqw;font-weight:700;line-height:1.1}
+.setuptop .sub{font-size:.7cqw;color:var(--tx2);margin-top:.1cqw}
+.steps{display:flex;gap:.35cqw;margin-left:auto}
+.steps i{width:1.6cqw;height:.22cqw;border-radius:.11cqw;background:rgba(255,255,255,.16);display:block}
+.steps i.on{background:linear-gradient(90deg,var(--acc),var(--acc2));box-shadow:0 0 .6cqw rgba(255,122,26,.6)}
+.setupbody{flex:1;min-height:0;overflow-y:auto;padding:.3cqw 1.2cqw 1cqw}
+.setupbody::-webkit-scrollbar{width:.4cqw}
+.setupbody::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:.2cqw}
+.setupbody h3{font-family:var(--disp);font-size:.95cqw;font-weight:600;margin:.6cqw 0 .35cqw}
+.setupbody p{font-size:.72cqw;color:var(--tx2);line-height:1.5;margin:.2cqw 0}
+.setupbody code{font-family:var(--mono);font-size:.66cqw;color:var(--acc2)}
+.feats{display:grid;grid-template-columns:1fr 1fr;gap:.5cqw;margin-top:.7cqw}
+.feat2{display:flex;gap:.55cqw;padding:.6cqw .7cqw;border:1px solid var(--edge2);border-radius:.5cqw;background:var(--g1)}
+.feat2 .ic{width:1.5cqw;height:1.5cqw;border-radius:.35cqw;flex:none;display:grid;place-items:center;background:var(--accsoft)}
+.feat2 .ic svg{width:.85cqw;height:.85cqw;stroke:var(--acc2);fill:none;stroke-width:1.7}
+.feat2 b{font-family:var(--disp);font-size:.75cqw;font-weight:600;display:block}
+.feat2 span{font-size:.64cqw;color:var(--tx3);line-height:1.35}
+.launchers{display:flex;gap:.4cqw;flex-wrap:wrap;margin-top:.6cqw}
+.lchip{display:flex;align-items:center;gap:.3cqw;font-size:.66cqw;padding:.22cqw .6cqw;border-radius:.9cqw;
+  border:1px solid var(--edge);background:var(--g1);color:var(--tx2)}
+.lchip.yes{border-color:rgba(87,214,141,.45);color:#a6ecc4}
+.lchip.yes b,.lchip b{width:.34cqw;height:.34cqw;border-radius:50%;background:var(--tx3);display:block}
+.lchip.yes b{background:var(--ok);box-shadow:0 0 .4cqw var(--ok)}
+.drives{display:flex;flex-direction:column;gap:.4cqw;margin-top:.5cqw}
+.drv{display:flex;align-items:center;gap:.7cqw;padding:.6cqw .7cqw;border-radius:.5cqw;border:1px solid var(--edge2);
+  background:var(--g1);cursor:pointer;transition:border-color .12s,background .12s}
+.drv:hover{border-color:var(--edge);background:var(--g2)}
+.drv.on{border-color:rgba(255,182,72,.55);background:linear-gradient(90deg,rgba(255,122,26,.14),var(--g1))}
+.drv .box{width:1.1cqw;height:1.1cqw;border-radius:.25cqw;border:1.5px solid var(--tx3);flex:none;display:grid;place-items:center;
+  font-size:.7cqw;color:#1e0d01}
+.drv.on .box{background:linear-gradient(150deg,var(--acc2),var(--acc));border-color:var(--acc2)}
+.drv .nm{font-family:var(--disp);font-size:.9cqw;font-weight:600}
+.drv .meta2{font-family:var(--mono);font-size:.58cqw;color:var(--tx3)}
+.drv .tags{margin-left:auto;display:flex;gap:.3cqw}
+.drv .tags span{font-family:var(--mono);font-size:.52cqw;color:var(--acc2);border:1px solid rgba(255,182,72,.4);
+  border-radius:.9cqw;padding:.06cqw .4cqw}
+.scanbox{margin-top:.6cqw;border-radius:.5cqw;border:1px solid var(--edge2);background:rgba(6,9,14,.6);
+  height:11cqw;overflow-y:auto;padding:.6cqw .7cqw;font-family:var(--mono);font-size:.6cqw;line-height:1.7;color:var(--tx2)}
+.scanbox::-webkit-scrollbar{width:.35cqw}
+.scanbox::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:.2cqw}
+.scanbox div{animation:logline .2s ease}
+.scanbox .g{color:var(--ok)} .scanbox .w{color:var(--warn)} .scanbox .d{color:var(--tx3)}
+.setupfoot{display:flex;align-items:center;gap:.6cqw;padding:.8cqw 1.2cqw;border-top:1px solid var(--edge2);
+  background:rgba(255,255,255,.03)}
+.setupfoot .note{font-size:.64cqw;color:var(--tx3)}
+.setupfoot .right2{margin-left:auto;display:flex;gap:.45cqw}
+.bigok{font-family:var(--disp);font-size:2.6cqw;font-weight:700;color:var(--acc2);line-height:1}
+.donerow{display:flex;gap:1.4cqw;align-items:center;margin:.8cqw 0 .4cqw}
+.donerow .v2{font-family:var(--disp);font-size:1.5cqw;font-weight:700;line-height:1}
+.donerow .k2{font-family:var(--mono);font-size:.55cqw;color:var(--tx3);letter-spacing:.1em}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .cap{max-width:1780px;margin:.9vh auto 0;display:flex;gap:1.2rem;flex-wrap:wrap;align-items:baseline;
   font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:#6b7686;text-transform:uppercase}
@@ -549,15 +626,15 @@ body.native .tbar .logo,body.native .tbar .syncpill{-webkit-app-region:no-drag}
 <div class="frame">
  <div id="bgart"></div><div id="bgtint"></div><div id="bgnoise"></div>
  <div class="win">
-  <div class="tbar">
+  <div class="tbar pywebview-drag-region">
     <div class="logo" data-go="home"><div class="mark"></div><div class="wm">GAME<span>BOX</span></div></div>
     <div class="sep"></div>
     <div class="crumbs">Library <span>/</span> <b id="crumb">Home</b></div>
     <div class="syncpill scanopen"><i></i><span id="synctx">6 sources synced</span></div>
     <div class="wbtns">
-      <button type="button" aria-label="Minimize"><svg viewBox="0 0 12 12"><path d="M2 6h8"/></svg></button>
-      <button type="button" aria-label="Maximize"><svg viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7"/></svg></button>
-      <button type="button" class="x" aria-label="Close"><svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
+      <button type="button" id="wmin" aria-label="Minimize"><svg viewBox="0 0 12 12"><path d="M1.5 6h9"/></svg></button>
+      <button type="button" id="wmax" aria-label="Maximize"><svg viewBox="0 0 12 12"><rect x="1.7" y="1.7" width="8.6" height="8.6" rx=".6"/></svg></button>
+      <button type="button" id="wclose" class="x" aria-label="Close"><svg viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
     </div>
   </div>
   <div class="shell">
@@ -572,7 +649,7 @@ body.native .tbar .logo,body.native .tbar .syncpill{-webkit-app-region:no-drag}
       </div>
       <div class="railfoot">
         <div class="drive">
-          <div class="r"><span>Storage</span><b id="freespace">--</b></div>
+          <div class="r"><span>Storage</span><b>--</b></div>
           <div class="meter" id="meter"></div>
           <div class="legend" id="legend"></div>
         </div>
@@ -615,8 +692,8 @@ body.native .tbar .logo,body.native .tbar .syncpill{-webkit-app-region:no-drag}
         <span class="s info"><b></b><span id="start">Artwork: 28 real covers · 7 generated</span></span>
         <span class="s warn"><b></b>1 install folder unreadable</span>
         <div class="right">
-          
-          <span id="drivestat">Local drives</span>
+          <span class="dlmini">Cyberpunk 2077 patch<span class="track"><i style="width:42%"></i></span>42% · 18.2 MB/s</span>
+          <span>Local drives</span>
         </div>
       </div>
     </div>
@@ -652,6 +729,30 @@ body.native .tbar .logo,body.native .tbar .syncpill{-webkit-app-region:no-drag}
         </div>
       </div>
     </aside>
+  </div>
+
+
+  <!-- first-run setup -->
+  <div class="setup" id="setup">
+    <div class="setuppanel">
+      <div class="setuptop">
+        <div class="mk2"></div>
+        <div>
+          <h2 id="setuptitle">Welcome to GameBox</h2>
+          <div class="sub" id="setupsub">Let's find the games on this PC</div>
+        </div>
+        <div class="steps" id="setupsteps"><i class="on"></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="setupbody" id="setupbody"></div>
+      <div class="setupfoot">
+        <span class="note" id="setupnote">Nothing is uploaded. Everything stays on this machine.</span>
+        <div class="right2">
+          <button class="btn2" id="setupskip" type="button">Skip</button>
+          <button class="btn2" id="setupback" type="button">Back</button>
+          <button class="btn-play" id="setupnext" type="button" style="height:1.9cqw;font-size:.78cqw;padding:0 1.1cqw">Get started</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="scanner" id="scanner">
@@ -891,9 +992,7 @@ const tileHTML=g=>{const st=STORES[g.s],[lab,cls]=stateLabel(g),c=cov(g);
 function pageLibrary(){
   const v=visible();
   if(!G.length){content.className="content";content.innerHTML=
-    '<div class="empty"><b>No library yet</b>Run <code>python scan-library.py --root C:\\ --apply</code> '+
-    'to find your games, then reopen GameBox.<br><br>The scanner reads Steam, GOG and Epic where they are '+
-    'installed, sizes every folder, and pulls covers from your launcher caches.</div>';return}
+    '<div class="empty"><b>No library yet</b>Run setup to scan this PC for games.</div>';return}
   if(!v.length){content.className="content";content.innerHTML=`<div class="empty"><b>Nothing matches</b>Try clearing the search or the filter chips.</div>`;return}
   if(!v.find(g=>g.id===S.sel))S.sel=v[0].id;
   if(S.view==="grid"){
@@ -999,8 +1098,7 @@ function tabBody(g,lab,cls){
 function pageHome(){
   content.className="content";
   if(!G.length){content.innerHTML='<div class="empty"><b>Welcome to GameBox</b>'+
-    'Your library is empty. Run <code>python scan-library.py --root C:\\ --apply</code> to scan this PC, '+
-    'then reopen the app.</div>';return}
+    'Your library is empty \u2014 run setup and pick the drives to scan.</div>';return}
   const played=G.filter(g=>g.played).sort((a,b)=>Date.parse(b.played)-Date.parse(a.played));
   const recent=[...G].sort((a,b)=>Date.parse(b.upd)-Date.parse(a.upd)).slice(0,10);
   const never=G.filter(g=>g.state==="new"),neverGB=never.reduce((a,b)=>a+b.gb,0);
@@ -1063,6 +1161,9 @@ function pageSettings(){
           .map(([a,b])=>`<div class="accdot ${LS("acc","#ff7a1a")===a?"on":""}" data-acc="${a}" data-acc2="${b}" style="background:linear-gradient(140deg,${b},${a})"></div>`).join("")}</div></div>
       <div class="setrow"><div><div class="t">Hidden games</div><div class="d">${hidden.length} hidden — dev tools and duplicates stay out of the library</div></div>
         <button class="btn2" data-unhide="1" style="margin-left:auto">Restore all</button></div>
+      <div class="setrow"><div><div class="t">Run setup again</div><div class="d">Pick drives and rebuild the library from scratch</div></div>
+        <button class="btn2" id="rerun" style="margin-left:auto">Open setup</button></div>
+      <div class="setrow"><div><div class="t">Run setup again</div><div class="d">Pick drives and rebuild the library from scratch</div></div><button class="btn2" id="rerun" style="margin-left:auto">Open setup</button></div>
       <div class="setrow"><div><div class="t">Library data</div><div class="d">35 games indexed from drive Z: on Sep 7, 2026</div></div>
         <button class="btn2 scanopen" style="margin-left:auto">Open scanner</button></div>
     </div>`;
@@ -1129,6 +1230,7 @@ document.addEventListener("click",e=>{
   const sc=t.closest("[data-sortcol]");if(sc){const map={title:"title",store:"store",size:"size",updated:"updated",played:"played"};
     if(map[sc.dataset.sortcol]){S.sort=map[sc.dataset.sortcol];SS("sort",S.sort);render()}return}
   const tb=t.closest("[data-tab]");if(tb){S.tab=tb.dataset.tab;render();return}
+  if(t.closest("#rerun")){openSetup(0);return}
   const st=t.closest("[data-set]");if(st){const k=st.dataset.set,v=!LS(k,k!=="scanstart");SS(k,v);applySettings();render();return}
   const ac=t.closest("[data-acc]");if(ac){SS("acc",ac.dataset.acc);SS("acc2",ac.dataset.acc2);applySettings();render();return}
   const row=t.closest("[data-id]");if(row){const id=+row.dataset.id,same=S.sel===id;S.sel=id;
@@ -1180,6 +1282,7 @@ function onBridgeReady(){
   if(api&&api.status){api.status().then(j=>{
     BACKEND.on=true;BACKEND.native=!!j.native;
     if(j.native)document.body.classList.add("native");
+    if(!j.setup_done||!G.length)setTimeout(()=>openSetup(0),350);
     document.getElementById("stsrc").textContent=j.app+" "+j.version+" \u00b7 "+j.games+" games ready to launch";
   }).catch(()=>{});return true}
   return false;
@@ -1217,13 +1320,12 @@ function openFolder(id){
 }
 document.addEventListener("click",e=>{const f=e.target.closest("[data-folder]");if(f)openFolder(+f.dataset.folder)});
 
-/* native window controls */
-document.querySelectorAll(".wbtns button").forEach((b,i)=>b.addEventListener("click",()=>{
-  const api=bridge();if(!api)return;
-  if(i===0&&api.minimize)api.minimize();
-  else if(i===1&&api.toggle_maximize)api.toggle_maximize();
-  else if(i===2&&api.close)api.close();
-}));
+/* native window controls - the title bar is the window chrome */
+const wbtn=(id,fn)=>{const el=document.getElementById(id);if(el)el.addEventListener("click",e=>{
+  e.stopPropagation();const api=bridge();if(api&&api[fn])api[fn]();})};
+wbtn("wmin","minimize");wbtn("wmax","toggle_maximize");wbtn("wclose","close");
+document.querySelector(".tbar").addEventListener("dblclick",e=>{
+  if(e.target.closest(".wbtns"))return;const api=bridge();if(api&&api.toggle_maximize)api.toggle_maximize();});
 
 /* ---------- inspector ---------- */
 const insp=document.getElementById("inspector"),instage=document.getElementById("instage"),inpanel=document.getElementById("inpanel");
@@ -1272,6 +1374,118 @@ window.addEventListener("mousemove",e=>{if(!drag)return;
   drag.moved=drag.moved||Math.abs(e.clientX-drag.x)>4||Math.abs(e.clientY-drag.y)>4;insApply()});
 window.addEventListener("mouseup",()=>{if(drag){instage.classList.remove("dragging");setTimeout(()=>{drag=null},0)}});
 instage.addEventListener("click",e=>{if(e.target.closest("[data-play]"))return;if(!drag||!drag.moved)insFlip()});
+
+
+/* ---------- first-run setup ---------- */
+const setupEl=document.getElementById("setup");
+let SU={step:0,drives:[],launchers:{},picked:[],lines:[],found:0,poll:null,ran:false};
+function suRender(){
+  const b=document.getElementById("setupbody"),t=document.getElementById("setuptitle"),
+        sub=document.getElementById("setupsub"),next=document.getElementById("setupnext"),
+        back=document.getElementById("setupback"),note=document.getElementById("setupnote");
+  [...document.getElementById("setupsteps").children].forEach((i,n)=>i.classList.toggle("on",n<=SU.step));
+  back.style.visibility=(SU.step===0||SU.step===2)?"hidden":"visible";
+  const skip=document.getElementById("setupskip");
+  if(skip)skip.style.display=(SU.step===2||SU.step===3)?"none":"flex";
+  if(SU.step===0){
+    t.textContent="Welcome to GameBox";sub.textContent="One library for every game on this PC";
+    next.textContent="Get started";note.textContent="Nothing is uploaded. Everything stays on this machine.";
+    const L=SU.launchers||{};
+    b.innerHTML='<p>GameBox gathers the games you already own \u2014 whichever launcher installed them \u2014 into one library, and launches them.</p>'+
+      '<div class="feats">'+
+      '<div class="feat2"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></span>'+
+        '<span><b>It finds them</b><span>Steam, GOG and Epic where they are installed, plus every game folder on the drives you choose.</span></span></div>'+
+      '<div class="feat2"><span class="ic"><svg viewBox="0 0 24 24"><path d="M8 5l12 7-12 7z"/></svg></span>'+
+        '<span><b>It launches them</b><span>Through the right launcher, executable or emulator \u2014 one button.</span></span></div>'+
+      '<div class="feat2"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 16l5-4 4 3 3-2 6 5"/></svg></span>'+
+        '<span><b>It finds the art</b><span>Covers from your own launcher caches first, then matched online.</span></span></div>'+
+      '<div class="feat2"><span class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18"/></svg></span>'+
+        '<span><b>A case for each</b><span>Click a game to pop its 3D case out, and flip it to read the back.</span></span></div>'+
+      '</div><h3>Launchers detected</h3><div class="launchers">'+
+      (Object.keys(L).length?Object.entries(L).map(function(e){
+        return '<span class="lchip '+(e[1]?"yes":"")+'"><b></b>'+e[0]+(e[1]?"":" \u2014 not installed")+'</span>'}).join("")
+        :'<span class="lchip"><b></b>Checking\u2026</span>')+'</div>';
+  }else if(SU.step===1){
+    t.textContent="Where should I look?";sub.textContent="Pick the drives that hold your games";
+    next.textContent="Scan "+(SU.picked.length||0)+" drive"+(SU.picked.length===1?"":"s");
+    note.textContent="A full scan sizes every folder, so a large drive can take a few minutes.";
+    b.innerHTML='<div class="drives">'+(SU.drives.map(function(d){
+      return '<div class="drv '+(SU.picked.indexOf(d.root)>=0?"on":"")+'" data-drive="'+d.root+'">'+
+        '<span class="box">'+(SU.picked.indexOf(d.root)>=0?"\u2713":"")+'</span>'+
+        '<span><span class="nm">'+d.root+'</span><span class="meta2">'+d.free+' GB free of '+d.total+' GB</span></span>'+
+        '<span class="tags">'+(d.hints||[]).map(function(h){return '<span>'+h+'</span>'}).join("")+'</span></div>'}).join("")
+      ||'<p>No fixed drives found.</p>')+'</div>';
+  }else if(SU.step===2){
+    t.textContent="Scanning your drives";sub.textContent="Reading launchers, sizing folders, matching artwork";
+    next.textContent="Please wait\u2026";next.disabled=true;
+    note.textContent="Leave this running \u2014 it writes your library when it finishes.";
+    b.innerHTML='<div class="scanbox" id="subox">'+SU.lines.map(function(l){return "<div>"+l+"</div>"}).join("")+'</div>';
+    const box=document.getElementById("subox");if(box)box.scrollTop=box.scrollHeight;
+  }else{
+    t.textContent="Your library is ready";sub.textContent="GameBox is set up";
+    next.textContent="Open my library";next.disabled=false;
+    note.textContent="Rescan any time from Settings, or the \u27f3 button in the toolbar.";
+    b.innerHTML='<div class="donerow">'+
+      '<div><div class="bigok">'+(SU.found||"\u2014")+'</div><div class="k2">GAMES FOUND</div></div>'+
+      '<div><div class="v2">'+SU.picked.join("  ")+'</div><div class="k2">SCANNED</div></div></div>'+
+      '<p>Covers came from your launcher caches where they were already downloaded, and were matched online where they were not.</p>'+
+      '<p style="color:var(--tx3)">If something is missing, run the scanner again with another drive selected.</p>';
+  }
+}
+function openSetup(step){
+  SU.step=step||0;setupEl.classList.add("open");
+  document.getElementById("setupnext").disabled=false;suRender();
+  if(!SU.drives.length){const api=bridge();if(api&&api.drives)api.drives().then(function(j){
+    SU.drives=j.drives||[];SU.launchers=j.launchers||{};
+    SU.picked=SU.drives.filter(function(d){return d.suggested}).map(function(d){return d.root});
+    suRender()})}
+}
+function closeSetup(){setupEl.classList.remove("open");if(SU.poll){clearInterval(SU.poll);SU.poll=null}}
+function suScan(){
+  const api=bridge();
+  if(!api||!api.start_scan){SU.step=3;SU.found=G.length;suRender();return}
+  SU.lines=["Starting scan of "+SU.picked.join(", ")+"\u2026"];SU.step=2;SU.ran=true;suRender();
+  api.start_scan(SU.picked).then(function(j){
+    if(!j.ok){SU.lines.push('<span class="w">'+j.msg+'</span>');suRender();
+      document.getElementById("setupnext").disabled=false;return}
+    SU.poll=setInterval(function(){
+      api.scan_progress().then(function(p){
+        (p.lines||[]).forEach(function(l){
+          const cls=/^\s*!/.test(l)?"w":(/^\+|artwork:/.test(l)?"g":(/^\s{4}/.test(l)?"d":""));
+          SU.lines.push(cls?'<span class="'+cls+'">'+l+'</span>':l);
+          const m=l.match(/(\d+)\s+games/);if(m)SU.found=+m[1];
+        });
+        if(p.lines&&p.lines.length)suRender();
+        if(p.done){clearInterval(SU.poll);SU.poll=null;SU.step=3;suRender()}
+      }).catch(function(){clearInterval(SU.poll);SU.poll=null});
+    },700);
+  });
+}
+document.getElementById("setupnext").addEventListener("click",function(){
+  if(SU.step===0){SU.step=1;suRender()}
+  else if(SU.step===1){if(!SU.picked.length){showToast("Pick at least one drive");return}suScan()}
+  else if(SU.step===3){
+    const api=bridge();
+    if(api&&api.settings_set)api.settings_set({setup_done:true});
+    closeSetup();
+    if(SU.ran&&api&&api.reload)api.reload();else{go("home");showToast("Setup complete")}
+  }
+});
+document.getElementById("setupback").addEventListener("click",function(){
+  if(SU.step>0){SU.step=Math.max(0,SU.step-1);suRender()}});
+document.addEventListener("click",function(e){
+  const d=e.target.closest("[data-drive]");if(!d)return;
+  const r=d.dataset.drive;
+  SU.picked=SU.picked.indexOf(r)>=0?SU.picked.filter(function(x){return x!==r}):SU.picked.concat([r]);
+  suRender();
+});
+document.addEventListener("click",function(e){if(e.target.closest("#rerun"))openSetup(0)});
+document.getElementById("setupskip").addEventListener("click",function(){
+  const api=bridge();if(api&&api.settings_set)api.settings_set({setup_done:true});
+  closeSetup();showToast("Setup skipped \u2014 reopen it any time from Settings");});
+window.addEventListener("keydown",function(e){
+  if(e.key==="Escape"&&setupEl.classList.contains("open")&&SU.step!==2){
+    const api=bridge();if(api&&api.settings_set)api.settings_set({setup_done:true});closeSetup()}});
 
 /* ---------- scanner ---------- */
 const TARGETS=[{n:"Drive Z:",p:"1.82 TB · NTFS",found:35},{n:"Steam",p:"Z:\\SteamLibrary\\steamapps",found:10},

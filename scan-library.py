@@ -9,7 +9,7 @@ and writes the result straight into the app.
   python scan-library.py                     scan and print a report
   python scan-library.py --json library.json write the raw scan out as JSON
   python scan-library.py --apply             build the library into GameBox.html
-  python scan-library.py --root Z:\\ --root D:\\Games
+  python scan-library.py --root C:\\ --root D:\\Games
 
 What it reads
 -------------
@@ -47,14 +47,61 @@ EPIC_MANIFESTS = os.path.expandvars(r"%ProgramData%\Epic\EpicGamesLauncher\Data\
 UA = {"User-Agent": "GameBox-Scanner/1.0"}
 GB = 1024 ** 3
 
-EMULATORS = {  # extension -> candidate emulator executables
-    ".iso": [r"Z:\pcsx2-v2.8.1-windows-x64-Qt\pcsx2-qt.exe",
-             os.path.expandvars(r"%ProgramFiles%\PCSX2\pcsx2-qt.exe"),
-             r"Z:\RPCS3\rpcs3.exe",
-             os.path.expandvars(r"%ProgramFiles%\RPCS3\rpcs3.exe")],
-    ".gb": [os.path.expandvars(r"%ProgramFiles%\mGBA\mGBA.exe")],
-    ".gbc": [os.path.expandvars(r"%ProgramFiles%\mGBA\mGBA.exe")],
-}
+# Emulator hosts are looked up, not hardcoded: common install roots first, then
+# any folder on the drives being scanned, then PATH. Override or extend by
+# dropping an emulators.json next to this script, e.g.
+#   {".iso": ["D:\\emu\\pcsx2-qt.exe"], ".gb": ["D:\\emu\\mGBA.exe"]}
+EMU_NAMES = {".iso": ("pcsx2-qt.exe", "pcsx2.exe", "rpcs3.exe"),
+             ".chd": ("pcsx2-qt.exe", "pcsx2.exe"),
+             ".gb": ("mGBA.exe", "VisualBoyAdvance-M.exe"),
+             ".gbc": ("mGBA.exe", "VisualBoyAdvance-M.exe")}
+_emu_cache = {}
+
+
+def find_emulator(ext, roots=()):
+    """First emulator that can open this kind of image, or None."""
+    if ext in _emu_cache:
+        return _emu_cache[ext]
+    override = os.path.join(HERE, "emulators.json")
+    if os.path.exists(override):
+        try:
+            hit = next((p for p in json.load(open(override, encoding="utf-8")).get(ext, [])
+                        if os.path.exists(p)), None)
+            if hit:
+                _emu_cache[ext] = hit
+                return hit
+        except Exception:
+            pass
+    names = EMU_NAMES.get(ext, ())
+    bases = [os.environ.get("ProgramFiles", ""), os.environ.get("ProgramFiles(x86)", ""),
+             os.path.expandvars(r"%LOCALAPPDATA%\Programs"), os.path.expandvars(r"%USERPROFILE%")]
+    bases += [r for r in roots if r]
+    for name in names:
+        for base in bases:
+            if not base or not os.path.isdir(base):
+                continue
+            direct = os.path.join(base, name)
+            if os.path.exists(direct):
+                _emu_cache[ext] = direct
+                return direct
+            try:
+                for entry in os.scandir(base):        # one level down: <base>\<app>\<exe>
+                    if entry.is_dir():
+                        p = os.path.join(entry.path, name)
+                        if os.path.exists(p):
+                            _emu_cache[ext] = p
+                            return p
+            except OSError:
+                pass
+        from shutil import which
+        p = which(name)
+        if p:
+            _emu_cache[ext] = p
+            return p
+    _emu_cache[ext] = None
+    return None
+
+
 SKIP_FOLDERS = {"system volume information", "$recycle.bin", "windows", "program files",
                 "program files (x86)", "programdata", "users", "temp", "tmp", "downloads",
                 "backup", "tools", "code", "files", "media & captures", "projects & code"}
@@ -203,7 +250,7 @@ def scan_folders(root, min_gb=0.2):
         if exe:
             entry["launch"] = ("exe", exe)
         elif disc:
-            emu = next((e for e in EMULATORS.get(os.path.splitext(disc)[1].lower(), []) if os.path.exists(e)), None)
+            emu = find_emulator(os.path.splitext(disc)[1].lower(), [root])
             entry["via"] = os.path.basename(emu) if emu else "Disc image"
             entry["store"] = "emu"
             entry["launch"] = ("emu", emu, disc) if emu else ("none", "")
