@@ -1,0 +1,1339 @@
+<meta charset="utf-8">
+<title>GameBox Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --tx:#f2f5fa; --tx2:#b3bdcd; --tx3:#7d8798;
+  --acc:#ff7a1a; --acc2:#ffb648; --accsoft:rgba(255,122,26,.18);
+  --ok:#57d68d; --info:#5cb0ff; --warn:#ffb648; --bad:#ff6b6b;
+  --steam:#66b5ef; --gog:#b47ae6; --epic:#e2e8f2; --ea:#ff7a6a; --emu:#57d68d; --local:#f5b055;
+  --g1:rgba(255,255,255,.055); --g2:rgba(255,255,255,.085);
+  --gs:rgba(10,13,19,.55); --gs2:rgba(10,13,19,.74);
+  --edge:rgba(255,255,255,.10); --edge2:rgba(255,255,255,.055);
+  --hi:inset 0 1px 0 rgba(255,255,255,.16);
+  --disp:"Archivo",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#06070b;color:var(--tx);font-family:var(--body);-webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2vh 1.5vw}
+.wrap{width:100%;max-width:1780px}
+.frame{position:relative;width:100%;aspect-ratio:16/9;container-type:size;border-radius:.9cqw;overflow:hidden;
+  background:#06070b;box-shadow:0 3cqw 6cqw -1.5cqw rgba(0,0,0,.85)}
+#bgart{position:absolute;inset:-12%;background-size:cover;background-position:center;filter:blur(3.4cqw) saturate(140%);
+  opacity:.62;transition:background-image .45s,opacity .45s;transform:scale(1.06)}
+#bgtint{position:absolute;inset:0;background:
+  radial-gradient(90% 70% at 20% 0%,rgba(9,12,20,.35),transparent 60%),
+  radial-gradient(80% 80% at 92% 100%,rgba(255,122,26,.12),transparent 60%),
+  linear-gradient(180deg,rgba(6,8,13,.62),rgba(6,8,13,.87))}
+#bgnoise{position:absolute;inset:0;opacity:.26;mix-blend-mode:overlay;
+  background-image:radial-gradient(rgba(255,255,255,.5) .5px,transparent .5px);background-size:3px 3px}
+.win{position:absolute;inset:1.8cqw 1.6cqw;border-radius:.75cqw;overflow:hidden;display:flex;flex-direction:column;
+  background:rgba(12,16,23,.5);backdrop-filter:blur(2.2cqw) saturate(150%);-webkit-backdrop-filter:blur(2.2cqw) saturate(150%);
+  border:1px solid var(--edge);box-shadow:0 1.6cqw 3.6cqw rgba(0,0,0,.62),var(--hi),0 0 0 1px rgba(0,0,0,.5)}
+.tbar{height:2.2cqw;flex:none;display:flex;align-items:center;gap:.8cqw;padding:0 .3cqw 0 .9cqw;
+  background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.02));border-bottom:1px solid var(--edge2)}
+.logo{display:flex;align-items:center;gap:.45cqw;cursor:pointer}
+.mark{width:1.15cqw;height:1.15cqw;border-radius:.24cqw;background:linear-gradient(150deg,var(--acc2),var(--acc));position:relative;flex:none;
+  box-shadow:0 0 .8cqw rgba(255,122,26,.5),var(--hi)}
+.mark::before{content:"";position:absolute;left:.2cqw;right:.2cqw;top:.3cqw;bottom:.3cqw;border:.1cqw solid rgba(20,14,8,.85);border-radius:.06cqw}
+.mark::after{content:"";position:absolute;left:.2cqw;right:.2cqw;top:.52cqw;height:.1cqw;background:rgba(20,14,8,.85)}
+.wm{font-family:var(--disp);font-weight:700;font-size:.85cqw}
+.wm span{color:var(--acc2)}
+.tbar .sep{width:1px;height:1.05cqw;background:var(--edge)}
+.crumbs{display:flex;gap:.35cqw;font-size:.65cqw;color:var(--tx3)}
+.crumbs b{color:var(--tx2);font-weight:500}
+.syncpill{margin-left:auto;display:flex;align-items:center;gap:.32cqw;font-family:var(--mono);font-size:.55cqw;color:var(--tx2);
+  border:1px solid var(--edge);border-radius:.9cqw;padding:.18cqw .55cqw;background:var(--g1);cursor:pointer}
+.syncpill i{width:.32cqw;height:.32cqw;border-radius:50%;background:var(--ok);box-shadow:0 0 .45cqw var(--ok)}
+.wbtns{display:flex}
+.wbtns button{all:unset;width:2cqw;height:2.2cqw;display:grid;place-items:center;color:var(--tx2);cursor:pointer}
+.wbtns button:hover{background:rgba(255,255,255,.1)}
+.wbtns button.x:hover{background:#d0392b;color:#fff}
+.wbtns svg{width:.62cqw;height:.62cqw;stroke:currentColor;stroke-width:1.4;fill:none}
+.shell{flex:1;display:flex;min-height:0}
+
+/* rail */
+.rail{width:13.2cqw;flex:none;display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+  border-right:1px solid var(--edge2)}
+.railscroll{flex:1;min-height:0;overflow-y:auto;padding:.7cqw .55cqw}
+.grp{font-family:var(--mono);font-size:.5cqw;letter-spacing:.16em;color:var(--tx3);padding:.5cqw .4cqw .3cqw;display:flex}
+.grp:first-child{padding-top:.1cqw}
+.grp .add{margin-left:auto;color:var(--acc2);cursor:pointer;letter-spacing:0;font-size:.52cqw}
+.nav{display:flex;flex-direction:column;gap:.06cqw}
+.nav a{display:flex;align-items:center;gap:.5cqw;padding:.34cqw .4cqw;border-radius:.34cqw;color:var(--tx2);text-decoration:none;
+  font-size:.68cqw;border-left:.14cqw solid transparent;cursor:pointer}
+.nav a svg{width:.85cqw;height:.85cqw;flex:none;stroke:currentColor;fill:none;stroke-width:1.6;opacity:.75}
+.nav a:hover{background:var(--g1);color:var(--tx)}
+.nav a:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.nav a.on{color:#fff;font-weight:500;border-left-color:var(--acc);
+  background:linear-gradient(90deg,var(--accsoft),rgba(255,255,255,.05));box-shadow:var(--hi)}
+.nav a.on svg{opacity:1;stroke:var(--acc2)}
+.ct{margin-left:auto;font-family:var(--mono);font-size:.55cqw;color:var(--tx3);font-variant-numeric:tabular-nums}
+.nav a.on .ct{color:var(--acc2)}
+.nav a .warnct{margin-left:auto;font-family:var(--mono);font-size:.55cqw;color:var(--warn)}
+.nav a i.sq{width:.42cqw;height:.42cqw;border-radius:.1cqw;flex:none;box-shadow:0 0 .4cqw currentColor}
+.railfoot{flex:none;border-top:1px solid var(--edge2);padding:.55cqw;display:flex;flex-direction:column;gap:.5cqw;background:rgba(255,255,255,.03)}
+.drive .r{display:flex;justify-content:space-between;align-items:baseline;font-size:.62cqw;color:var(--tx2);margin-bottom:.28cqw}
+.drive .r b{font-family:var(--disp);font-size:.72cqw;color:var(--tx);font-weight:600;font-variant-numeric:tabular-nums}
+.meter{height:.34cqw;border-radius:.17cqw;background:rgba(255,255,255,.1);display:flex;overflow:hidden;box-shadow:var(--hi)}
+.meter i{display:block;height:100%}
+.legend{display:flex;gap:.45cqw;flex-wrap:wrap;font-family:var(--mono);font-size:.48cqw;color:var(--tx3);margin-top:.28cqw}
+.legend span{display:flex;align-items:center;gap:.18cqw}
+.legend b{width:.3cqw;height:.3cqw;border-radius:.06cqw;display:block}
+.me{display:flex;align-items:center;gap:.45cqw;padding:.35cqw;border-radius:.4cqw;background:var(--g2);border:1px solid var(--edge2);box-shadow:var(--hi);cursor:pointer}
+.av{width:1.5cqw;height:1.5cqw;border-radius:.38cqw;flex:none;background:linear-gradient(140deg,#5b6a86,#2b3446);display:grid;place-items:center;
+  font-family:var(--disp);font-weight:700;font-size:.7cqw;color:#e6edf8;position:relative}
+.av::after{content:"";position:absolute;right:-.12cqw;bottom:-.12cqw;width:.42cqw;height:.42cqw;border-radius:50%;background:var(--ok);border:.1cqw solid #141922}
+.me .nm{font-family:var(--disp);font-size:.7cqw;font-weight:600}
+.me .sub{font-family:var(--mono);font-size:.5cqw;color:var(--tx3)}
+.me .gear{margin-left:auto;width:.85cqw;height:.85cqw;stroke:var(--tx3);fill:none;stroke-width:1.6}
+
+/* main + toolbar */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{flex:none;padding:.6cqw .8cqw .5cqw;border-bottom:1px solid var(--edge2);display:flex;flex-direction:column;gap:.5cqw;
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015))}
+.top.hide{display:none}
+.toprow{display:flex;align-items:center;gap:.5cqw}
+.search{flex:1;max-width:24cqw;height:1.85cqw;border-radius:.95cqw;display:flex;align-items:center;gap:.45cqw;padding:0 .7cqw;
+  background:var(--gs);border:1px solid var(--edge);box-shadow:var(--hi)}
+.search:focus-within{border-color:rgba(255,122,26,.65);box-shadow:0 0 0 2px rgba(255,122,26,.2),var(--hi)}
+.search>svg{width:.85cqw;height:.85cqw;stroke:var(--tx3);fill:none;stroke-width:1.7;flex:none}
+.search input{all:unset;flex:1;min-width:0;font-family:var(--body);font-size:.7cqw;color:var(--tx)}
+.search input::placeholder{color:var(--tx3)}
+.search .clr{cursor:pointer;color:var(--tx3);font-size:.8cqw;line-height:1}
+.kbd{font-family:var(--mono);font-size:.5cqw;color:var(--tx3);border:1px solid var(--edge);border-radius:.2cqw;padding:.06cqw .26cqw;background:var(--g1)}
+.dd{position:relative}
+.selectish{height:1.85cqw;display:flex;align-items:center;gap:.4cqw;padding:0 .6cqw;border-radius:.4cqw;border:1px solid var(--edge);
+  background:var(--g1);font-size:.68cqw;color:var(--tx2);cursor:pointer;white-space:nowrap;box-shadow:var(--hi)}
+.selectish b{color:var(--tx);font-weight:500}
+.selectish svg{width:.7cqw;height:.7cqw;stroke:var(--tx3);fill:none;stroke-width:1.8}
+.ddmenu{position:absolute;top:2.1cqw;left:0;z-index:20;min-width:9cqw;display:none;flex-direction:column;padding:.25cqw;border-radius:.45cqw;
+  background:var(--gs2);border:1px solid var(--edge);backdrop-filter:blur(1.4cqw);box-shadow:0 1cqw 2cqw rgba(0,0,0,.5),var(--hi)}
+.ddmenu.open{display:flex}
+.ddmenu div{padding:.35cqw .5cqw;border-radius:.3cqw;font-size:.66cqw;color:var(--tx2);cursor:pointer;display:flex;gap:.4cqw;align-items:center}
+.ddmenu div:hover{background:var(--g2);color:var(--tx)}
+.ddmenu div.on{color:var(--acc2)}
+.ddmenu div.on::before{content:"✓";font-size:.6cqw}
+.ddmenu div:not(.on)::before{content:"";width:.5cqw}
+.seg{display:flex;border:1px solid var(--edge);border-radius:.4cqw;overflow:hidden;height:1.85cqw;background:var(--g1);box-shadow:var(--hi)}
+.seg button{all:unset;display:flex;align-items:center;gap:.28cqw;padding:0 .55cqw;height:100%;cursor:pointer;color:var(--tx3);font-size:.62cqw}
+.seg button+button{border-left:1px solid var(--edge2)}
+.seg button svg{width:.78cqw;height:.78cqw;stroke:currentColor;fill:none;stroke-width:1.6}
+.seg button.on{background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08));color:#fff}
+.seg button:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.iconbtn{width:1.85cqw;height:1.85cqw;flex:none;border-radius:.4cqw;border:1px solid var(--edge);background:var(--g1);display:grid;place-items:center;
+  position:relative;cursor:pointer;box-shadow:var(--hi)}
+.iconbtn svg{width:.85cqw;height:.85cqw;stroke:var(--tx2);fill:none;stroke-width:1.6}
+.iconbtn:hover{background:var(--g2)}
+.iconbtn .cnt{position:absolute;top:-.22cqw;right:-.22cqw;min-width:.78cqw;height:.78cqw;padding:0 .14cqw;border-radius:.39cqw;background:var(--acc);
+  color:#180c02;font-family:var(--mono);font-size:.48cqw;font-weight:600;display:grid;place-items:center;box-shadow:0 0 .6cqw rgba(255,122,26,.6)}
+.tools{margin-left:auto;display:flex;gap:.4cqw;align-items:center}
+.chips{display:flex;align-items:center;gap:.35cqw;flex-wrap:wrap}
+.chip{font-size:.63cqw;color:var(--tx2);border:1px solid var(--edge);border-radius:.9cqw;padding:.18cqw .58cqw;background:var(--g1);cursor:pointer;
+  white-space:nowrap;display:flex;align-items:center;gap:.25cqw}
+.chip:hover{background:var(--g2);color:var(--tx)}
+.chip.on{background:linear-gradient(120deg,rgba(255,122,26,.35),rgba(255,182,72,.14));border-color:rgba(255,182,72,.5);color:#fff;box-shadow:var(--hi)}
+.chip .n{font-family:var(--mono);font-size:.55cqw;color:var(--tx3)}
+.chip.on .n{color:#ffe0b8}
+.chips .count{margin-left:auto;font-family:var(--mono);font-size:.55cqw;color:var(--tx3);white-space:nowrap}
+.content{flex:1;min-height:0;overflow-y:auto;padding:.7cqw .8cqw 1cqw}
+.content.nopad{padding:0}
+.content::-webkit-scrollbar,.railscroll::-webkit-scrollbar,.side::-webkit-scrollbar,.dlist::-webkit-scrollbar,.dpane::-webkit-scrollbar,.scanlog::-webkit-scrollbar{width:.4cqw}
+.content::-webkit-scrollbar-thumb,.railscroll::-webkit-scrollbar-thumb,.side::-webkit-scrollbar-thumb,.dlist::-webkit-scrollbar-thumb,.dpane::-webkit-scrollbar-thumb,.scanlog::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:.2cqw}
+
+/* hero */
+.hero{display:flex;gap:1cqw;padding:.8cqw;border-radius:.6cqw;position:relative;overflow:hidden;
+  border:1px solid var(--edge);background:var(--gs);backdrop-filter:blur(1.6cqw) saturate(140%);box-shadow:var(--hi),0 .8cqw 2cqw rgba(0,0,0,.4)}
+.hero .heroart{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.5}
+.hero .heroveil{position:absolute;inset:0;background:linear-gradient(100deg,rgba(8,11,17,.92) 30%,rgba(8,11,17,.4) 72%,transparent)}
+.hero .cover{width:8cqw;flex:none;aspect-ratio:.667;border-radius:.32cqw;position:relative;overflow:hidden;cursor:pointer;z-index:1;
+  background-size:cover;background-position:center;box-shadow:0 .8cqw 1.6cqw rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.16)}
+.hero .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:.42cqw;z-index:1}
+.kicker{display:flex;align-items:center;gap:.4cqw;font-family:var(--mono);font-size:.52cqw;letter-spacing:.12em;color:var(--acc2)}
+.kicker .dot{width:.3cqw;height:.3cqw;border-radius:50%;background:var(--acc);box-shadow:0 0 .5cqw var(--acc)}
+.htitle{font-family:var(--disp);font-size:1.8cqw;font-weight:700;line-height:1.02;margin:0;letter-spacing:-.01em;text-wrap:balance;
+  text-shadow:0 .1cqw .4cqw rgba(0,0,0,.5)}
+.hsub{font-size:.7cqw;color:var(--tx2);margin:0;max-width:34cqw;line-height:1.35}
+.hfacts{display:flex;gap:.8cqw;flex-wrap:wrap;font-size:.65cqw;color:var(--tx2);align-items:center}
+.hfacts b{font-family:var(--mono);color:var(--tx);font-weight:500;font-variant-numeric:tabular-nums}
+.storechip{display:inline-flex;align-items:center;gap:.28cqw;font-size:.6cqw;border:1px solid var(--edge);border-radius:.9cqw;padding:.1cqw .42cqw;
+  background:var(--g1);color:var(--tx2)}
+.storechip i{width:.36cqw;height:.36cqw;border-radius:50%;display:block;box-shadow:0 0 .4cqw currentColor}
+.hactions{display:flex;gap:.4cqw;align-items:center;flex-wrap:wrap}
+.btn-play{height:2.05cqw;padding:0 1.1cqw;border-radius:1.03cqw;border:1px solid rgba(255,210,150,.7);cursor:pointer;display:flex;align-items:center;
+  gap:.45cqw;background:linear-gradient(180deg,#ffa550,var(--acc));color:#1e0d01;font-family:var(--disp);font-weight:700;font-size:.85cqw;
+  box-shadow:0 .35cqw 1cqw rgba(255,122,26,.45),inset 0 1px 0 rgba(255,255,255,.55)}
+.btn-play:hover{filter:brightness(1.07)}
+.btn-play:active{transform:translateY(1px)}
+.btn-play:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.btn-play svg{width:.8cqw;height:.8cqw;fill:#1e0d01}
+.btn2{height:2.05cqw;padding:0 .7cqw;border-radius:1.03cqw;border:1px solid var(--edge);background:var(--g2);color:var(--tx2);cursor:pointer;
+  display:flex;align-items:center;gap:.32cqw;font-family:var(--body);font-size:.66cqw;box-shadow:var(--hi)}
+.btn2:hover{background:rgba(255,255,255,.16);color:var(--tx)}
+.btn2:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.btn2 svg{width:.78cqw;height:.78cqw;stroke:currentColor;fill:none;stroke-width:1.6}
+.btn2.icon{width:2.05cqw;padding:0;justify-content:center}
+.btn2.fav{color:var(--acc2);border-color:rgba(255,182,72,.45)}
+.btn2.fav svg{fill:rgba(255,182,72,.3)}
+.hpath{font-family:var(--mono);font-size:.55cqw;color:var(--tx3);display:flex;align-items:center;gap:.3cqw;white-space:nowrap;overflow:hidden}
+.hpath svg{width:.7cqw;height:.7cqw;stroke:var(--tx3);fill:none;stroke-width:1.6;flex:none}
+.sechead{display:flex;align-items:baseline;gap:.5cqw;margin:.9cqw 0 .45cqw}
+.sechead h3{font-family:var(--disp);font-size:.85cqw;font-weight:600;margin:0}
+.sechead .n{font-family:var(--mono);font-size:.58cqw;color:var(--tx3)}
+.sechead .link{margin-left:auto;font-size:.62cqw;color:var(--acc2);cursor:pointer}
+
+/* grid */
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:.55cqw}
+.grid.big{grid-template-columns:repeat(5,1fr)}
+.tile{border-radius:.4cqw;overflow:hidden;background:var(--g1);border:1px solid var(--edge2);cursor:pointer;display:flex;flex-direction:column;
+  transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease;box-shadow:0 .3cqw .8cqw rgba(0,0,0,.35)}
+.tile:hover{border-color:rgba(255,255,255,.28);transform:translateY(-.16cqw);box-shadow:0 .8cqw 1.6cqw rgba(0,0,0,.5)}
+.tile:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.tile.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc),0 .6cqw 1.6cqw rgba(255,122,26,.25)}
+.art{aspect-ratio:.667;position:relative;display:flex;align-items:flex-end;padding:.4cqw;overflow:hidden;background-size:cover;background-position:center}
+.sdot{position:absolute;top:.35cqw;left:.35cqw;width:.4cqw;height:.4cqw;border-radius:50%;z-index:2;box-shadow:0 0 0 .1cqw rgba(6,8,12,.6),0 0 .5cqw currentColor}
+.state{position:absolute;top:.3cqw;right:.3cqw;z-index:2;font-family:var(--mono);font-size:.46cqw;padding:.08cqw .3cqw;border-radius:.9cqw;
+  background:rgba(8,11,17,.62);backdrop-filter:blur(.4cqw);border:1px solid rgba(255,255,255,.18);color:var(--tx2)}
+.state.new{color:#a6ecc4;border-color:rgba(87,214,141,.5)}
+.state.upd{color:#ffdcae;border-color:rgba(255,182,72,.5)}
+.state.err{color:#ffb3b3;border-color:rgba(255,107,107,.55)}
+.tfoot{display:flex;align-items:center;gap:.3cqw;padding:.3cqw .4cqw;font-family:var(--mono);font-size:.5cqw;color:var(--tx3);
+  border-top:1px solid var(--edge2);background:rgba(10,13,19,.5);backdrop-filter:blur(.8cqw)}
+.tfoot .sz{margin-left:auto;color:var(--tx2);font-variant-numeric:tabular-nums}
+.tfoot .fav{color:var(--acc2)}
+.tacts{position:absolute;inset:auto .3cqw .3cqw .3cqw;z-index:3;display:flex;gap:.25cqw;opacity:0;transform:translateY(.2cqw);transition:.14s}
+.tile:hover .tacts{opacity:1;transform:none}
+.tacts button{all:unset;cursor:pointer;font-family:var(--mono);font-size:.46cqw;color:#fff;background:rgba(10,13,19,.68);backdrop-filter:blur(.6cqw);
+  border:1px solid rgba(255,255,255,.25);border-radius:.9cqw;padding:.12cqw .38cqw}
+.tacts button:hover{background:var(--acc);color:#1e0d01;border-color:var(--acc)}
+.tacts button.starred{color:var(--acc2)}
+
+/* list */
+.ltable{width:100%;border-collapse:collapse;font-size:.66cqw}
+.ltable thead th{position:sticky;top:0;z-index:2;background:rgba(12,16,23,.85);backdrop-filter:blur(1cqw);text-align:left;font-family:var(--mono);
+  font-size:.5cqw;letter-spacing:.12em;color:var(--tx3);font-weight:500;padding:.45cqw .5cqw;border-bottom:1px solid var(--edge);cursor:pointer}
+.ltable thead th:hover{color:var(--tx2)}
+.ltable th.num,.ltable td.num{text-align:right;font-variant-numeric:tabular-nums}
+.ltable th .sortarrow{color:var(--acc2);margin-left:.2cqw}
+.ltable tbody tr{border-bottom:1px solid var(--edge2);cursor:pointer}
+.ltable tbody tr:hover{background:var(--g1)}
+.ltable tbody tr.sel{background:linear-gradient(90deg,var(--accsoft),transparent);box-shadow:inset .14cqw 0 0 var(--acc)}
+.ltable td{padding:.3cqw .5cqw;color:var(--tx2);vertical-align:middle}
+.ltable td.title{color:var(--tx);font-weight:500}
+.lthumb{width:1.35cqw;aspect-ratio:.667;border-radius:.14cqw;display:inline-block;vertical-align:middle;margin-right:.45cqw;
+  background-size:cover;background-position:center;box-shadow:0 .1cqw .3cqw rgba(0,0,0,.6)}
+.ltable .st{font-family:var(--mono);font-size:.55cqw}
+.ltable .mono{font-family:var(--mono);font-size:.58cqw;font-variant-numeric:tabular-nums}
+.ltable .pathcell{font-family:var(--mono);font-size:.54cqw;color:var(--tx3);max-width:12cqw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:.22cqw;font-family:var(--mono);font-size:.5cqw;border:1px solid var(--edge);border-radius:.9cqw;padding:.06cqw .32cqw}
+.pill.ok{color:#a6ecc4;border-color:rgba(87,214,141,.4)}
+.pill.warn{color:#ffdcae;border-color:rgba(255,182,72,.4)}
+.pill.err{color:#ffb3b3;border-color:rgba(255,107,107,.45)}
+.pill.mute{color:var(--tx3)}
+.rowplay{all:unset;cursor:pointer;font-family:var(--disp);font-size:.58cqw;font-weight:600;color:#1e0d01;background:linear-gradient(180deg,#ffb763,var(--acc));
+  border-radius:.9cqw;padding:.14cqw .55cqw;opacity:0}
+tr:hover .rowplay,tr.sel .rowplay{opacity:1}
+
+/* details */
+.dwrap{display:flex;height:100%;min-height:0}
+.dlist{width:14cqw;flex:none;border-right:1px solid var(--edge2);overflow-y:auto;background:rgba(255,255,255,.03)}
+.drow{display:flex;align-items:center;gap:.45cqw;padding:.34cqw .5cqw;cursor:pointer;border-bottom:1px solid var(--edge2)}
+.drow:hover{background:var(--g1)}
+.drow.sel{background:linear-gradient(90deg,var(--accsoft),transparent);box-shadow:inset .14cqw 0 0 var(--acc)}
+.drow .th{width:1.15cqw;aspect-ratio:.667;border-radius:.12cqw;flex:none;background-size:cover;background-position:center}
+.drow .nm{font-size:.62cqw;color:var(--tx);line-height:1.15;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drow .sz{margin-left:auto;font-family:var(--mono);font-size:.5cqw;color:var(--tx3);font-variant-numeric:tabular-nums}
+.dpane{flex:1;min-width:0;overflow-y:auto;position:relative}
+.dbannerart{position:absolute;left:0;right:0;top:0;height:13cqw;background-size:cover;background-position:center 32%;opacity:.5;
+  -webkit-mask-image:linear-gradient(#000 30%,transparent);mask-image:linear-gradient(#000 30%,transparent)}
+.dinner{position:relative;padding:.9cqw}
+.dbanner{display:flex;gap:1cqw;align-items:flex-start}
+.dstage{width:8.6cqw;flex:none;height:11cqw;perspective:34cqw;display:grid;place-items:center;cursor:pointer}
+.dmeta{flex:1;min-width:0;display:flex;flex-direction:column;gap:.42cqw}
+.dtitle{font-family:var(--disp);font-size:1.5cqw;font-weight:700;line-height:1.02;margin:0;text-wrap:balance;text-shadow:0 .1cqw .4cqw rgba(0,0,0,.5)}
+.dtabs{display:flex;gap:.1cqw;border-bottom:1px solid var(--edge2);margin:.9cqw 0 .6cqw}
+.dtab{padding:.32cqw .75cqw;font-size:.66cqw;color:var(--tx3);border-bottom:.12cqw solid transparent;cursor:pointer;display:flex;gap:.3cqw;align-items:center}
+.dtab:hover{color:var(--tx2)}
+.dtab.on{color:var(--tx);border-bottom-color:var(--acc)}
+.dtab .b{font-family:var(--mono);font-size:.5cqw;color:var(--tx3)}
+.dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5cqw}
+.dcard{border:1px solid var(--edge2);border-radius:.4cqw;background:var(--g1);backdrop-filter:blur(1cqw);padding:.5cqw .6cqw;box-shadow:var(--hi)}
+.dcard .k{font-family:var(--mono);font-size:.48cqw;letter-spacing:.12em;color:var(--tx3)}
+.dcard .v{font-family:var(--disp);font-size:.88cqw;font-weight:600;margin-top:.15cqw;font-variant-numeric:tabular-nums}
+.dcard .v small{font-family:var(--body);font-size:.58cqw;color:var(--tx3);font-weight:400}
+.dcard.wide{grid-column:span 3}
+.dcard.half{grid-column:span 2}
+.dcard.wide .v.path{font-family:var(--mono);font-size:.62cqw;font-weight:400;color:var(--tx2);overflow-x:auto;white-space:nowrap}
+.blurb{font-size:.7cqw;color:var(--tx2);line-height:1.45;margin:0}
+.shotrow{display:grid;grid-template-columns:repeat(3,1fr);gap:.4cqw;margin-top:.2cqw}
+.shotrow img{width:100%;border-radius:.3cqw;display:block;border:1px solid var(--edge2)}
+.tagrow{display:flex;gap:.3cqw;flex-wrap:wrap}
+.tag{font-family:var(--mono);font-size:.55cqw;color:var(--tx2);border:1px solid var(--edge);border-radius:.9cqw;padding:.1cqw .45cqw;background:var(--g1)}
+/* files */
+.ftable{width:100%;border-collapse:collapse;font-size:.64cqw}
+.ftable th{text-align:left;font-family:var(--mono);font-size:.48cqw;letter-spacing:.12em;color:var(--tx3);font-weight:500;
+  padding:.3cqw .5cqw;border-bottom:1px solid var(--edge2)}
+.ftable td{padding:.26cqw .5cqw;color:var(--tx2);border-bottom:1px solid var(--edge2)}
+.ftable td.n{color:var(--tx);font-family:var(--mono);font-size:.6cqw;display:flex;align-items:center;gap:.4cqw}
+.ftable td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.ftable svg{width:.8cqw;height:.8cqw;stroke:var(--tx3);fill:none;stroke-width:1.6;flex:none}
+.ftable .dir svg{stroke:var(--acc2)}
+/* timeline */
+.tl{display:flex;flex-direction:column;gap:.1cqw;margin-top:.2cqw}
+.tl .ev{display:flex;gap:.6cqw;padding:.4cqw .2cqw;border-bottom:1px solid var(--edge2)}
+.tl .dot{width:.5cqw;height:.5cqw;border-radius:50%;flex:none;margin-top:.22cqw;background:var(--tx3)}
+.tl .dot.a{background:var(--acc);box-shadow:0 0 .5cqw var(--acc)}
+.tl .dot.g{background:var(--ok)}
+.tl .tt{font-size:.68cqw;color:var(--tx)}
+.tl .ds{font-family:var(--mono);font-size:.55cqw;color:var(--tx3)}
+.tl .when{margin-left:auto;font-family:var(--mono);font-size:.55cqw;color:var(--tx2)}
+
+/* home */
+.hrow{display:grid;grid-template-columns:repeat(4,1fr);gap:.55cqw}
+.statcard{border:1px solid var(--edge2);border-radius:.45cqw;background:var(--g1);padding:.6cqw .7cqw;box-shadow:var(--hi);backdrop-filter:blur(1cqw)}
+.statcard .k{font-family:var(--mono);font-size:.48cqw;letter-spacing:.14em;color:var(--tx3)}
+.statcard .v{font-family:var(--disp);font-size:1.5cqw;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.statcard .s{font-size:.6cqw;color:var(--tx2)}
+.statcard.acc .v{color:var(--acc2)}
+.statcard.warn .v{color:var(--warn)}
+.statcard.link{cursor:pointer}
+.statcard.link:hover{background:var(--g2);border-color:var(--edge)}
+.mrow{display:flex;gap:.5cqw;overflow-x:auto;padding-bottom:.3cqw}
+.mrow::-webkit-scrollbar{height:.35cqw}.mrow::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:.2cqw}
+.mcard{width:7.4cqw;flex:none;border-radius:.4cqw;overflow:hidden;border:1px solid var(--edge2);background:var(--g1);cursor:pointer}
+.mcard:hover{border-color:rgba(255,255,255,.28)}
+.mcard .mart{aspect-ratio:.667;background-size:cover;background-position:center;position:relative}
+.mcard .mf{padding:.3cqw .4cqw;font-family:var(--mono);font-size:.5cqw;color:var(--tx3);display:flex}
+.mcard .mf .r{margin-left:auto;color:var(--tx2)}
+.colgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.55cqw}
+.colcard{border:1px solid var(--edge2);border-radius:.5cqw;overflow:hidden;background:var(--g1);cursor:pointer;box-shadow:var(--hi)}
+.colcard:hover{border-color:rgba(255,255,255,.3);transform:translateY(-.1cqw)}
+.colcard{transition:.14s}
+.colstack{display:flex;height:6.4cqw;padding:.5cqw;gap:-.5cqw;background:rgba(0,0,0,.25);position:relative;overflow:hidden}
+.colstack i{width:3.6cqw;aspect-ratio:.667;border-radius:.2cqw;background-size:cover;background-position:center;flex:none;
+  box-shadow:0 .3cqw .8cqw rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.14);transform:rotate(-3deg)}
+.colstack i:nth-child(2){margin-left:-1.6cqw;transform:rotate(2deg) translateY(.2cqw)}
+.colstack i:nth-child(3){margin-left:-1.6cqw;transform:rotate(6deg) translateY(.4cqw)}
+.colstack i:nth-child(4){margin-left:-1.6cqw;transform:rotate(9deg) translateY(.6cqw)}
+.colbody{padding:.5cqw .6cqw}
+.colbody h4{margin:0;font-family:var(--disp);font-size:.85cqw;font-weight:600}
+.colbody .s{font-family:var(--mono);font-size:.55cqw;color:var(--tx3)}
+/* artwork page */
+.artgrid{display:grid;grid-template-columns:repeat(9,1fr);gap:.45cqw}
+.artcell{border-radius:.3cqw;overflow:hidden;border:1px solid var(--edge2);cursor:pointer;position:relative}
+.artcell .a{aspect-ratio:.667;background-size:cover;background-position:center}
+.artcell .lb{position:absolute;left:0;right:0;bottom:0;font-family:var(--mono);font-size:.44cqw;padding:.14cqw .24cqw;
+  background:rgba(8,11,17,.75);backdrop-filter:blur(.5cqw);color:var(--tx2);text-align:center}
+.artcell.gen .lb{color:var(--warn)}
+.artcell.cdn .lb{color:var(--info)}
+.artcell.cache .lb{color:var(--ok)}
+/* settings */
+.setwrap{max-width:34cqw;display:flex;flex-direction:column;gap:.5cqw}
+.setrow{display:flex;align-items:center;gap:.7cqw;padding:.55cqw .65cqw;border:1px solid var(--edge2);border-radius:.45cqw;background:var(--g1)}
+.setrow .t{font-size:.7cqw;color:var(--tx)}
+.setrow .d{font-size:.6cqw;color:var(--tx3);margin-top:.1cqw}
+.sw{margin-left:auto;width:2.1cqw;height:1.05cqw;border-radius:.55cqw;background:rgba(255,255,255,.14);border:1px solid var(--edge);position:relative;
+  flex:none;cursor:pointer;transition:.16s}
+.sw::after{content:"";position:absolute;left:.1cqw;top:.09cqw;width:.78cqw;height:.78cqw;border-radius:50%;background:var(--tx2);transition:.16s}
+.sw.on{background:linear-gradient(90deg,rgba(255,122,26,.5),rgba(255,182,72,.6));border-color:rgba(255,182,72,.6)}
+.sw.on::after{left:1.15cqw;background:#fff}
+.accrow{display:flex;gap:.4cqw;margin-left:auto}
+.accdot{width:1.05cqw;height:1.05cqw;border-radius:50%;cursor:pointer;border:2px solid transparent}
+.accdot.on{border-color:#fff}
+.empty{padding:3cqw;text-align:center;color:var(--tx3);font-size:.75cqw}
+.empty b{display:block;font-family:var(--disp);font-size:1cqw;color:var(--tx2);margin-bottom:.3cqw}
+
+/* ---- 3D CASE ---- */
+.case3d{--w:6cqw;width:var(--w);height:calc(var(--w)/.667);position:relative;transform-style:preserve-3d;
+  transform:rotateX(6deg) rotateY(var(--ry,-22deg));transition:transform .5s cubic-bezier(.2,.8,.25,1)}
+.case3d.spin{animation:casein .62s cubic-bezier(.2,.85,.25,1)}
+@keyframes casein{0%{transform:rotateX(6deg) rotateY(-110deg) scale(.86);opacity:0}60%{opacity:1}100%{transform:rotateX(6deg) rotateY(var(--ry,-22deg)) scale(1)}}
+.case3d.flip{transform:rotateX(6deg) rotateY(calc(var(--ry,-22deg) + 180deg))}
+.case3d .fc{position:absolute;inset:0;backface-visibility:hidden;border-radius:.1cqw .26cqw .26cqw .1cqw;overflow:hidden;
+  background-size:cover;background-position:center}
+.case3d .spine{position:absolute;top:0;bottom:0;left:0;width:calc(var(--w)*.115);transform-origin:left center;transform:rotateY(90deg);
+  border-radius:.06cqw;display:grid;place-items:center;overflow:hidden}
+.case3d .spine em{font-family:var(--disp);font-weight:600;font-size:calc(var(--w)*.055);letter-spacing:.04em;color:#eef3fb;white-space:nowrap;
+  transform:rotate(90deg);font-style:normal;text-transform:uppercase;text-shadow:0 0 .2cqw rgba(0,0,0,.9)}
+.case3d .gloss{position:absolute;inset:0;z-index:6;border-radius:.1cqw .26cqw .26cqw .1cqw;pointer-events:none;backface-visibility:hidden;
+  background:linear-gradient(104deg,rgba(255,255,255,.3) 0 5%,rgba(255,255,255,.06) 11% 30%,transparent 44% 64%,rgba(255,255,255,.15) 73% 77%,transparent 86%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),inset -.08cqw 0 .16cqw rgba(0,0,0,.55),inset .04cqw 0 0 rgba(255,255,255,.35)}
+.floorshadow{position:absolute;left:50%;bottom:-6%;width:86%;height:8%;transform:translateX(-50%);border-radius:50%;
+  background:radial-gradient(ellipse,rgba(0,0,0,.7),transparent 70%);filter:blur(.2cqw)}
+/* ---- back of the case: a real box back ---- */
+.bk{transform:rotateY(180deg);background:#0d1117;display:flex;flex-direction:column;overflow:hidden;
+  font-size:calc(var(--w)*.043);color:#c9d3e2}
+.bk .band{height:calc(var(--w)*.085);flex:none;display:flex;align-items:center;padding:0 calc(var(--w)*.04);gap:calc(var(--w)*.03);
+  background:linear-gradient(90deg,#11161f,#1b2432);border-bottom:1px solid rgba(255,255,255,.14)}
+.bk .band .pf{font-family:var(--disp);font-weight:700;font-size:calc(var(--w)*.05);letter-spacing:.1em;color:#eaf0f8}
+.bk .band .gb{margin-left:auto;font-family:var(--disp);font-weight:700;font-size:calc(var(--w)*.042);color:var(--acc2)}
+.bk .body{flex:1;min-height:0;padding:calc(var(--w)*.045);display:flex;flex-direction:column;gap:calc(var(--w)*.032)}
+.bk h6{margin:0;font-family:var(--disp);font-size:calc(var(--w)*.062);font-weight:700;line-height:1.05;color:#fff}
+.bk .shots{display:flex;gap:calc(var(--w)*.022)}
+.bk .shots i{flex:1;aspect-ratio:16/9;background-size:cover;background-position:center;border:1px solid rgba(255,255,255,.16);display:block}
+.bk .desc{font-size:calc(var(--w)*.041);line-height:1.32;color:#aab5c6;overflow:hidden}
+.bk .feat{display:flex;flex-wrap:wrap;gap:calc(var(--w)*.018)}
+.bk .feat span{font-family:var(--mono);font-size:calc(var(--w)*.034);border:1px solid rgba(255,255,255,.2);border-radius:calc(var(--w)*.02);
+  padding:0 calc(var(--w)*.022);color:#c2ccdb}
+.bk .credits{font-family:var(--mono);font-size:calc(var(--w)*.036);line-height:1.5;color:#8f9aab;border-top:1px solid rgba(255,255,255,.12);
+  padding-top:calc(var(--w)*.028)}
+.bk .credits b{color:#cfd8e6;font-weight:500}
+.bk .foot{flex:none;display:flex;align-items:stretch;gap:calc(var(--w)*.03);padding:calc(var(--w)*.035) calc(var(--w)*.045);
+  border-top:1px solid rgba(255,255,255,.14);background:#0a0e14}
+.bk .esrb{width:calc(var(--w)*.14);flex:none;border:1.5px solid #dfe6f0;border-radius:calc(var(--w)*.012);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;color:#dfe6f0;line-height:1;padding:calc(var(--w)*.014) 0}
+.bk .esrb b{font-family:var(--disp);font-size:calc(var(--w)*.06);font-weight:700}
+.bk .esrb span{font-size:calc(var(--w)*.024);letter-spacing:.04em;margin-top:calc(var(--w)*.01)}
+.bk .specs{flex:1;min-width:0;font-family:var(--mono);font-size:calc(var(--w)*.032);color:#98a3b4;line-height:1.45}
+.bk .specs div{display:flex;gap:calc(var(--w)*.02)}
+.bk .specs .k{color:#6f7a8b;min-width:calc(var(--w)*.13)}
+.bk .barcode{width:calc(var(--w)*.16);flex:none;display:flex;flex-direction:column;justify-content:flex-end;gap:calc(var(--w)*.012)}
+.bk .barcode i{height:calc(var(--w)*.075);display:block;background:repeating-linear-gradient(90deg,#e9eff7 0 1px,transparent 1px 2px,#e9eff7 2px 4px,transparent 4px 5px,#e9eff7 5px 7px,transparent 7px 9px)}
+.bk .barcode span{font-family:var(--mono);font-size:calc(var(--w)*.026);color:#8f9aab;text-align:center;letter-spacing:.06em}
+
+/* inspector */
+.inspector{position:absolute;inset:0;z-index:30;display:none;background:rgba(6,8,13,.58);backdrop-filter:blur(1.4cqw) saturate(120%);
+  align-items:center;justify-content:center;gap:2.2cqw;padding:2cqw;perspective:75cqw}
+.inspector.open{display:flex;animation:fadein .18s ease}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.instage{position:relative;display:grid;place-items:center;transform-style:preserve-3d}
+.instage .case3d{--w:17cqw;cursor:grab;transition:transform .45s cubic-bezier(.2,.8,.25,1)}
+.instage.dragging .case3d{transition:none;cursor:grabbing}
+.instage .ring{position:absolute;bottom:-2cqw;left:50%;width:24cqw;height:6cqw;transform:translateX(-50%) rotateX(76deg);border-radius:50%;
+  border:.1cqw solid rgba(255,182,72,.45);background:radial-gradient(ellipse,rgba(255,122,26,.18),transparent 68%)}
+.inpanel{width:22cqw;display:flex;flex-direction:column;gap:.55cqw;padding:1cqw;border-radius:.6cqw;
+  background:var(--gs2);border:1px solid var(--edge);backdrop-filter:blur(1.6cqw);box-shadow:var(--hi),0 1cqw 2.4cqw rgba(0,0,0,.5)}
+.inpanel .kick{font-family:var(--mono);font-size:.55cqw;letter-spacing:.16em;color:var(--acc2)}
+.inpanel h2{font-family:var(--disp);font-size:1.7cqw;font-weight:700;line-height:1.02;margin:0;text-wrap:balance}
+.inpanel .facts{display:grid;grid-template-columns:1fr 1fr;gap:.35cqw}
+.inpanel .facts div{border:1px solid var(--edge2);border-radius:.35cqw;background:var(--g1);padding:.4cqw .5cqw}
+.inpanel .facts .k{font-family:var(--mono);font-size:.46cqw;letter-spacing:.12em;color:var(--tx3)}
+.inpanel .facts .v{font-family:var(--disp);font-size:.82cqw;font-weight:600;font-variant-numeric:tabular-nums}
+.inpanel .p{font-family:var(--mono);font-size:.55cqw;color:var(--tx3);white-space:nowrap;overflow-x:auto}
+.inhint{font-family:var(--mono);font-size:.55cqw;color:var(--tx3);display:flex;gap:.5cqw;align-items:center;flex-wrap:wrap}
+.inclose{position:absolute;top:1cqw;right:1cqw;width:1.9cqw;height:1.9cqw;border-radius:50%;border:1px solid var(--edge);background:var(--g2);
+  color:var(--tx2);display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(.8cqw)}
+.inclose svg{width:.85cqw;height:.85cqw;stroke:currentColor;fill:none;stroke-width:1.8}
+
+/* side */
+.side{width:18cqw;flex:none;border-left:1px solid var(--edge2);overflow-y:auto;padding:.7cqw .65cqw;display:flex;flex-direction:column;gap:.6cqw;
+  background:linear-gradient(200deg,rgba(255,255,255,.06),rgba(255,255,255,.02))}
+.card{border:1px solid var(--edge2);border-radius:.45cqw;background:var(--g1);backdrop-filter:blur(1cqw);box-shadow:var(--hi)}
+.card>h4{margin:0;padding:.45cqw .55cqw;font-family:var(--mono);font-size:.5cqw;letter-spacing:.14em;color:var(--tx3);font-weight:500;
+  border-bottom:1px solid var(--edge2);display:flex;align-items:center;gap:.3cqw}
+.card>h4 .r{margin-left:auto;color:var(--acc2);cursor:pointer;letter-spacing:0;font-size:.55cqw;font-family:var(--body)}
+.card .in{padding:.5cqw .55cqw}
+.selhead{display:flex;gap:.6cqw;padding:.55cqw .55cqw .4cqw}
+.selhead .minis{width:4.2cqw;flex:none;perspective:20cqw;display:grid;place-items:center;cursor:pointer}
+.selhead .minis .case3d{--w:3.6cqw}
+.selhead .st{min-width:0;display:flex;flex-direction:column;gap:.2cqw}
+.selhead .st h5{margin:0;font-family:var(--disp);font-size:.8cqw;font-weight:600;line-height:1.1;text-wrap:balance}
+.selhead .st .sub{font-family:var(--mono);font-size:.52cqw;color:var(--tx3)}
+.kv{display:flex;justify-content:space-between;gap:.5cqw;padding:.24cqw 0;font-size:.63cqw;color:var(--tx3);border-bottom:1px solid var(--edge2)}
+.kv:last-child{border-bottom:none}
+.kv b{color:var(--tx2);font-weight:500;font-family:var(--mono);font-size:.6cqw;text-align:right;font-variant-numeric:tabular-nums}
+.kv b.ok{color:var(--ok)} .kv b.warnc{color:var(--warn)} .kv b.err{color:var(--bad)}
+.pathbox{margin-top:.4cqw;padding:.35cqw .42cqw;border-radius:.3cqw;background:var(--gs);border:1px solid var(--edge2);
+  font-family:var(--mono);font-size:.55cqw;color:var(--tx2);overflow-x:auto;white-space:nowrap}
+.srcrow{display:flex;align-items:center;gap:.45cqw;padding:.36cqw .55cqw;border-bottom:1px solid var(--edge2);font-size:.65cqw;cursor:pointer}
+.srcrow:last-child{border-bottom:none}
+.srcrow:hover{background:var(--g1)}
+.srcrow i{width:.55cqw;height:.55cqw;border-radius:50%;flex:none;box-shadow:0 0 .5cqw currentColor}
+.srcrow .nm{color:var(--tx);font-weight:500}
+.srcrow .st{font-family:var(--mono);font-size:.5cqw;color:var(--tx3)}
+.srcrow .cnt{margin-left:auto;font-family:var(--mono);font-size:.6cqw;color:var(--tx2);font-variant-numeric:tabular-nums}
+.connect{all:unset;margin-left:auto;font-size:.58cqw;color:#1e0d01;background:linear-gradient(180deg,#ffc477,var(--acc2));border-radius:.9cqw;
+  padding:.14cqw .5cqw;cursor:pointer;font-weight:600}
+.addsrc{display:flex;align-items:center;justify-content:center;gap:.3cqw;margin:.45cqw .55cqw .5cqw;padding:.4cqw;border-radius:.9cqw;
+  border:1px dashed rgba(255,255,255,.22);color:var(--tx2);font-size:.62cqw;cursor:pointer}
+.addsrc:hover{border-color:var(--acc2);color:var(--acc2)}
+.actbtns{display:grid;grid-template-columns:1fr 1fr;gap:.3cqw;padding:.15cqw .55cqw .5cqw}
+.actbtns .btn2{height:1.7cqw;justify-content:center;font-size:.62cqw}
+.artstat .in{display:flex;gap:.55cqw;align-items:center}
+.bignum{font-family:var(--disp);font-size:1.3cqw;font-weight:700;line-height:1;color:var(--acc2);font-variant-numeric:tabular-nums}
+.bignum small{display:block;font-family:var(--mono);font-size:.48cqw;color:var(--tx3);font-weight:400;margin-top:.15cqw;letter-spacing:.06em}
+.artstat p{margin:0;font-size:.62cqw;color:var(--tx2);line-height:1.35}
+.artstat .go{margin-top:.3cqw;font-size:.6cqw;color:var(--acc2);cursor:pointer}
+.reclaim .bignum{color:var(--warn)}
+.status{flex:none;height:1.5cqw;display:flex;align-items:center;gap:.7cqw;padding:0 .8cqw;border-top:1px solid var(--edge2);
+  background:rgba(255,255,255,.04);font-family:var(--mono);font-size:.52cqw;color:var(--tx3)}
+.status .s{display:flex;align-items:center;gap:.28cqw}
+.status .s b{width:.3cqw;height:.3cqw;border-radius:50%;display:block}
+.status .ok b{background:var(--ok);box-shadow:0 0 .4cqw var(--ok)} .status .info b{background:var(--info)} .status .warn b{background:var(--warn)}
+.status .right{margin-left:auto;display:flex;gap:.7cqw;align-items:center}
+.dlmini{display:flex;align-items:center;gap:.35cqw;color:var(--tx2)}
+.dlmini .track{width:4cqw;height:.28cqw;border-radius:.14cqw;background:rgba(255,255,255,.14);overflow:hidden}
+.dlmini .track i{display:block;height:100%;background:var(--info)}
+
+/* scanner */
+.scanner{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+  background:rgba(6,8,13,.62);backdrop-filter:blur(1.4cqw) saturate(120%)}
+.scanner.open{display:flex;animation:fadein .18s ease}
+.scanpanel{width:52cqw;max-height:88%;display:flex;flex-direction:column;border-radius:.7cqw;overflow:hidden;
+  background:var(--gs2);border:1px solid var(--edge);backdrop-filter:blur(2cqw) saturate(150%);
+  box-shadow:var(--hi),0 2cqw 4cqw rgba(0,0,0,.6);animation:pop .24s cubic-bezier(.2,.9,.3,1)}
+@keyframes pop{from{transform:translateY(1.2cqw) scale(.98);opacity:0}to{transform:none;opacity:1}}
+.scanhead{display:flex;align-items:center;gap:.6cqw;padding:.75cqw .9cqw;border-bottom:1px solid var(--edge2);
+  background:linear-gradient(180deg,rgba(255,255,255,.07),transparent)}
+.scanhead .ico{width:1.9cqw;height:1.9cqw;border-radius:.45cqw;flex:none;display:grid;place-items:center;
+  background:linear-gradient(150deg,var(--acc2),var(--acc));box-shadow:0 0 1cqw rgba(255,122,26,.45),var(--hi)}
+.scanhead .ico svg{width:1.1cqw;height:1.1cqw;stroke:#1e0d01;fill:none;stroke-width:2}
+.scanhead h3{margin:0;font-family:var(--disp);font-size:1cqw;font-weight:700}
+.scanhead .sub{font-family:var(--mono);font-size:.55cqw;color:var(--tx3)}
+.scanhead .close{margin-left:auto;width:1.7cqw;height:1.7cqw;border-radius:50%;border:1px solid var(--edge);background:var(--g1);
+  color:var(--tx2);display:grid;place-items:center;cursor:pointer}
+.scanhead .close svg{width:.8cqw;height:.8cqw;stroke:currentColor;fill:none;stroke-width:1.8}
+.scanbody{display:flex;min-height:0;flex:1}
+.scantargets{width:17cqw;flex:none;border-right:1px solid var(--edge2);padding:.7cqw;display:flex;flex-direction:column;gap:.3cqw;overflow-y:auto}
+.scantargets .lbl{font-family:var(--mono);font-size:.5cqw;letter-spacing:.14em;color:var(--tx3);padding:.2cqw .3cqw .3cqw}
+.tgt{display:flex;align-items:center;gap:.5cqw;padding:.42cqw .5cqw;border-radius:.4cqw;border:1px solid var(--edge2);
+  background:var(--g1);font-size:.64cqw;color:var(--tx2)}
+.tgt.done{border-color:rgba(87,214,141,.35)}
+.tgt.busy{border-color:rgba(255,182,72,.5);background:linear-gradient(90deg,rgba(255,182,72,.14),var(--g1))}
+.tgt .nm{color:var(--tx);font-weight:500;display:block;line-height:1.15}
+.tgt .pp{font-family:var(--mono);font-size:.5cqw;color:var(--tx3);display:block}
+.tgt .mk{width:.9cqw;height:.9cqw;border-radius:50%;flex:none;display:grid;place-items:center;border:1px solid var(--edge);
+  font-family:var(--mono);font-size:.45cqw;color:var(--tx3)}
+.tgt.done .mk{background:var(--ok);border-color:var(--ok);color:#06210f}
+.tgt.busy .mk{border-color:var(--acc2);border-top-color:transparent;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tgt .ct2{margin-left:auto;font-family:var(--mono);font-size:.55cqw;color:var(--tx2);font-variant-numeric:tabular-nums}
+.scanmain{flex:1;min-width:0;display:flex;flex-direction:column;padding:.7cqw .8cqw;gap:.55cqw}
+.scanbar{height:.5cqw;border-radius:.25cqw;background:rgba(255,255,255,.1);overflow:hidden;box-shadow:var(--hi)}
+.scanbar i{display:block;height:100%;width:0;border-radius:.25cqw;background:linear-gradient(90deg,var(--acc),var(--acc2));
+  box-shadow:0 0 .8cqw rgba(255,122,26,.6);transition:width .4s ease}
+.scanmeta{display:flex;gap:.8cqw;font-family:var(--mono);font-size:.55cqw;color:var(--tx3)}
+.scanmeta b{color:var(--tx);font-weight:500}
+.scanlog{flex:1;min-height:6cqw;max-height:11cqw;overflow-y:auto;border-radius:.4cqw;border:1px solid var(--edge2);
+  background:rgba(6,9,14,.55);padding:.5cqw .6cqw;font-family:var(--mono);font-size:.55cqw;line-height:1.6;color:var(--tx2)}
+.scanlog div{opacity:0;animation:logline .25s ease forwards}
+@keyframes logline{from{opacity:0;transform:translateY(.2cqw)}to{opacity:1;transform:none}}
+.scanlog .t{color:var(--tx3)} .scanlog .ok2{color:var(--ok)} .scanlog .w2{color:var(--warn)} .scanlog .a2{color:var(--acc2)}
+.scanfound{display:flex;gap:.3cqw;overflow:hidden;height:3.4cqw}
+.scanfound i{width:2.27cqw;height:3.4cqw;border-radius:.16cqw;flex:none;background-size:cover;background-position:center;
+  box-shadow:0 .2cqw .5cqw rgba(0,0,0,.5);animation:pop .3s cubic-bezier(.2,.9,.3,1)}
+.scanfoot{display:flex;align-items:center;gap:.5cqw;padding:.65cqw .9cqw;border-top:1px solid var(--edge2);background:rgba(255,255,255,.03)}
+.scanfoot .sum{font-size:.65cqw;color:var(--tx2)}
+.scanfoot .sum b{font-family:var(--disp);color:var(--tx)}
+.scanfoot .btns{margin-left:auto;display:flex;gap:.4cqw}
+.toast{position:absolute;left:50%;bottom:2.4cqw;transform:translateX(-50%) translateY(1cqw);z-index:50;opacity:0;pointer-events:none;
+  display:flex;align-items:center;gap:.5cqw;padding:.5cqw .9cqw;border-radius:1.2cqw;font-size:.68cqw;
+  background:var(--gs2);border:1px solid var(--edge);backdrop-filter:blur(1.2cqw);box-shadow:var(--hi),0 .8cqw 2cqw rgba(0,0,0,.5);
+  transition:opacity .3s,transform .3s}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.toast .dotok{width:.45cqw;height:.45cqw;border-radius:50%;background:var(--ok);box-shadow:0 0 .6cqw var(--ok)}
+.btn-play.launching,.rowplay.launching{animation:launchpulse 1.2s ease}
+@keyframes launchpulse{0%{filter:brightness(1)}25%{filter:brightness(1.55)}100%{filter:brightness(1)}}
+
+/* ---- native app mode: fill the real window, use the real title bar ---- */
+body.native{padding:0;display:block;min-height:0;overflow:hidden}
+body.native .wrap{max-width:none;width:100vw;height:100vh}
+body.native .frame{aspect-ratio:auto;width:100vw;height:100vh;border-radius:0;box-shadow:none}
+body.native .win{inset:0;border-radius:0;border:none;box-shadow:none}
+body.native .cap{display:none}
+body.native .wbtns{display:none}
+body.native .tbar{-webkit-app-region:drag}
+body.native .tbar .logo,body.native .tbar .syncpill{-webkit-app-region:no-drag}
+/* the window can be any shape, so let the shelf breathe on short windows */
+@media (max-height:700px){body.native .content{padding:.5cqw .6cqw .7cqw}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.cap{max-width:1780px;margin:.9vh auto 0;display:flex;gap:1.2rem;flex-wrap:wrap;align-items:baseline;
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:#6b7686;text-transform:uppercase}
+.cap strong{color:#98a3b4;letter-spacing:.18em}
+.cap span{color:#49525f}
+</style>
+
+<div class="wrap">
+<div class="frame">
+ <div id="bgart"></div><div id="bgtint"></div><div id="bgnoise"></div>
+ <div class="win">
+  <div class="tbar">
+    <div class="logo" data-go="home"><div class="mark"></div><div class="wm">GAME<span>BOX</span></div></div>
+    <div class="sep"></div>
+    <div class="crumbs">Library <span>/</span> <b id="crumb">Home</b></div>
+    <div class="syncpill scanopen"><i></i><span id="synctx">6 sources synced</span></div>
+    <div class="wbtns">
+      <button type="button" aria-label="Minimize"><svg viewBox="0 0 12 12"><path d="M2 6h8"/></svg></button>
+      <button type="button" aria-label="Maximize"><svg viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7"/></svg></button>
+      <button type="button" class="x" aria-label="Close"><svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
+    </div>
+  </div>
+  <div class="shell">
+    <nav class="rail">
+      <div class="railscroll">
+        <div class="grp">LIBRARY</div>
+        <div class="nav" id="navmain"></div>
+        <div class="grp">SOURCES <span class="add scanopen">+ Add</span></div>
+        <div class="nav" id="navsrc"></div>
+        <div class="grp">COLLECTIONS</div>
+        <div class="nav" id="navcol"></div>
+      </div>
+      <div class="railfoot">
+        <div class="drive">
+          <div class="r"><span>Storage</span><b id="freespace">--</b></div>
+          <div class="meter" id="meter"></div>
+          <div class="legend" id="legend"></div>
+        </div>
+        <div class="me" data-go="settings">
+          <div class="av">P</div>
+          <div><div class="nm">Player</div><div class="sub">6 accounts linked</div></div>
+          <svg class="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6L7 7m10 10l1.4 1.4m0-12.8L17 7M7 17l-1.4 1.4"/></svg>
+        </div>
+      </div>
+    </nav>
+
+    <div class="main">
+      <div class="top" id="toolbar">
+        <div class="toprow">
+          <label class="search">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>
+            <input id="q" type="text" placeholder="Search your library…" autocomplete="off">
+            <span class="clr" id="qclr" hidden>×</span><span class="kbd">/</span>
+          </label>
+          <div class="dd">
+            <div class="selectish" id="sortbtn">Sort: <b id="sortlbl">Recently played</b><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+            <div class="ddmenu" id="sortmenu"></div>
+          </div>
+          <div class="seg" id="views">
+            <button type="button" data-v="grid" class="on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Grid</button>
+            <button type="button" data-v="list"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>List</button>
+            <button type="button" data-v="details"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="16"/><path d="M13 6h8M13 11h8M13 16h5"/></svg>Details</button>
+          </div>
+          <div class="tools">
+            <button class="iconbtn scanopen" type="button" aria-label="Rescan sources"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.7L20 8M20 12a8 8 0 0 1-13.7 5.7L4 16"/><path d="M20 4v4h-4M4 20v-4h4"/></svg></button>
+            <button class="iconbtn" type="button" id="notifbtn" aria-label="Notifications"><svg viewBox="0 0 24 24"><path d="M6 16V10a6 6 0 1 1 12 0v6l2 3H4z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg><span class="cnt">2</span></button>
+            <button class="iconbtn" type="button" data-go="settings" aria-label="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6L7 7m10 10l1.4 1.4m0-12.8L17 7M7 17l-1.4 1.4"/></svg></button>
+          </div>
+        </div>
+        <div class="chips" id="chips"></div>
+      </div>
+      <div class="content" id="content"></div>
+      <div class="status">
+        <span class="s ok"><b></b><span id="stsrc">Steam · GOG · Epic · EA App connected</span></span>
+        <span class="s info"><b></b><span id="start">Artwork: 28 real covers · 7 generated</span></span>
+        <span class="s warn"><b></b>1 install folder unreadable</span>
+        <div class="right">
+          
+          <span id="drivestat">Local drives</span>
+        </div>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="card">
+        <h4>SELECTED <span class="r" id="inspectlink">Inspect case</span></h4>
+        <div class="selhead">
+          <div class="minis" id="minicase"></div>
+          <div class="st"><h5 id="selTitle">—</h5><div class="sub" id="selSub">—</div></div>
+        </div>
+        <div class="in" id="selFacts"></div>
+        <div class="actbtns" id="selActs"></div>
+      </div>
+      <div class="card artstat">
+        <h4>ARTWORK</h4>
+        <div class="in">
+          <div class="bignum" id="artnum">35<small>OF 35 COVERS</small></div>
+          <div><p id="arttx">11 from launcher caches, 17 matched on the Steam CDN, 7 generated.</p>
+          <div class="go" data-go="artwork">Open artwork manager →</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h4>CONNECTED LIBRARIES <span class="r scanopen">Sync all</span></h4>
+        <div id="srcrows"></div>
+        <div class="addsrc scanopen">+ Add store or scan a folder</div>
+      </div>
+      <div class="card reclaim artstat">
+        <h4>SPACE REVIEW</h4>
+        <div class="in">
+          <div class="bignum" id="recnum">362.6<small>GB · 8 GAMES</small></div>
+          <div><p>Installed but never launched.</p><div class="go" data-go="never">Review and free up space →</div></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="scanner" id="scanner">
+    <div class="scanpanel">
+      <div class="scanhead">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/><path d="M3 12h18"/></svg></div>
+        <div><h3>Library scanner</h3><div class="sub">Drives, stores and emulators — reads what is actually installed</div></div>
+        <button class="close" id="scanclose" type="button" aria-label="Close scanner"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="scanbody">
+        <div class="scantargets" id="scantargets"><div class="lbl">SCAN TARGETS</div></div>
+        <div class="scanmain">
+          <div class="scanbar"><i id="scanfill"></i></div>
+          <div class="scanmeta">
+            <span>Elapsed <b id="scantime">0.0 s</b></span><span>Games <b id="scangames">0</b></span>
+            <span>Size <b id="scansize">0 TB</b></span><span>Artwork <b id="scanart">0</b></span>
+          </div>
+          <div class="scanlog" id="scanlog"></div>
+          <div class="scanfound" id="scanfound"></div>
+        </div>
+      </div>
+      <div class="scanfoot">
+        <div class="sum" id="scansum">Ready to scan 6 targets.</div>
+        <div class="btns">
+          <button class="btn2" id="scancancel" type="button">Close</button>
+          <button class="btn-play" id="scanrun" type="button" style="height:1.9cqw;font-size:.75cqw;padding:0 .9cqw">START SCAN</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"><span class="dotok"></span><span id="toasttx">Ready</span></div>
+
+  <div class="inspector" id="inspector">
+    <div class="instage" id="instage"><div class="ring"></div></div>
+    <div class="inpanel" id="inpanel"></div>
+    <button class="inclose" id="inclose" type="button" aria-label="Close inspector"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+ </div>
+</div>
+<div class="cap"><strong>GAMEBOX</strong><span>Home · Library · Collections · Artwork · Settings</span><span>Real library from drive Z: — metadata, covers and file listings read from this PC</span></div>
+</div>
+
+<script>
+const G=/*LIBRARY*/[];
+const STORES={steam:{n:"Steam",c:"var(--steam)"},gog:{n:"GOG",c:"var(--gog)"},epic:{n:"Epic",c:"var(--epic)"},
+ ea:{n:"EA App",c:"var(--ea)"},emu:{n:"Emulated",c:"var(--emu)"},local:{n:"Folder",c:"var(--local)"}};
+const SRCN={"steam-cache":"Steam cache","gog-cache":"GOG cache","steam-cdn":"Steam CDN","generated":"Generated"};
+const COLLECTIONS=[
+ {n:"Saints Row",m:g=>/^Saints Row/.test(g.t)},
+ {n:"Prince of Persia",m:g=>/Prince of Persia/.test(g.t)},
+ {n:"Mass Effect",m:g=>/^Mass Effect/.test(g.t)},
+ {n:"Dragon Age",m:g=>/^Dragon Age/.test(g.t)},
+ {n:"Emulated discs",m:g=>g.s==="emu"},
+ {n:"Couch co-op",m:g=>(g.meta&&g.meta.cats||[]).some(c=>/Co-op|Split/.test(c))}
+];
+const fmtGB=v=>v>=1000?(v/1000).toFixed(2)+" TB":v.toFixed(1)+" GB";
+const bytes=n=>n>=1073741824?(n/1073741824).toFixed(1)+" GB":n>=1048576?(n/1048576).toFixed(0)+" MB":n>=1024?(n/1024).toFixed(0)+" KB":n+" B";
+const cov=g=>g.art&&g.art.c||null, amb=g=>g.art&&(g.art.a||g.art.c)||null, asrc=g=>g.art?SRCN[g.art.s]:null;
+const stateLabel=g=>g.state==="err"?["FILES MISSING","err"]:g.state==="upd"?["UPDATE","upd"]:g.state==="new"?["NEVER PLAYED","new"]:g.played?["PLAYED",""]:["INSTALLED",""];
+
+/* ---------- persisted state ---------- */
+const LS=(k,d)=>{try{const v=localStorage.getItem("gamebox."+k);return v===null?d:JSON.parse(v)}catch(e){return d}};
+const SS=(k,v)=>{try{localStorage.setItem("gamebox."+k,JSON.stringify(v))}catch(e){}};
+let favs=LS("favs",G.filter(g=>g.fav).map(g=>g.id));
+let hidden=LS("hidden",[]);
+const S={page:"home",view:LS("view","grid"),sort:LS("sort","played"),q:"",filters:[],sel:0,tab:"overview",store:null,collection:null};
+const isFav=g=>favs.includes(g.id);
+
+/* ---------- filtering ---------- */
+const SORTS={played:"Recently played",title:"Title A–Z",size:"Size on disk",updated:"Last updated",store:"Store"};
+function visible(){
+  let a=G.filter(g=>!hidden.includes(g.id));
+  const p=S.page;
+  if(p==="continue")a=a.filter(g=>g.played);
+  if(p==="installed")a=a.filter(g=>g.state!=="err");
+  if(p==="never")a=a.filter(g=>g.state==="new");
+  if(p==="favorites")a=a.filter(isFav);
+  if(p==="source")a=a.filter(g=>g.s===S.store);
+  if(p==="collection"){const c=COLLECTIONS.find(c=>c.n===S.collection);if(c)a=a.filter(c.m)}
+  if(S.q){const q=S.q.toLowerCase();
+    a=a.filter(g=>(g.t+" "+g.path+" "+STORES[g.s].n+" "+(g.meta&&g.meta.dev||"")+" "+(g.meta&&(g.meta.genres||[]).join(" ")||"")).toLowerCase().includes(q))}
+  S.filters.forEach(f=>{
+    if(f==="installed")a=a.filter(g=>g.state!=="err");
+    if(f==="never")a=a.filter(g=>g.state==="new");
+    if(f==="update")a=a.filter(g=>g.state==="upd");
+    if(f==="fav")a=a.filter(isFav);
+    if(f==="coop")a=a.filter(g=>(g.meta&&g.meta.cats||[]).some(c=>/Co-op|Split/.test(c)));
+    if(f==="pad")a=a.filter(g=>(g.meta&&g.meta.cats||[]).some(c=>/controller/i.test(c)));
+    if(f==="vr")a=a.filter(g=>g.vr||(g.meta&&g.meta.cats||[]).some(c=>/VR/.test(c)));
+  });
+  const k={played:g=>-(Date.parse(g.played||"1970")||0),title:g=>g.t.toLowerCase(),size:g=>-g.gb,
+           updated:g=>-(Date.parse(g.upd||"1970")||0),store:g=>STORES[g.s].n+g.t}[S.sort];
+  return a.sort((x,y)=>{const a1=k(x),b1=k(y);return a1<b1?-1:a1>b1?1:0});
+}
+
+/* ---------- 3D case, with a real back cover ---------- */
+function caseHTML(g){
+  const st=STORES[g.s],c=cov(g),m=g.meta||{};
+  const front=c?`<div class="fc" style="background-image:url(${c})"></div>`
+   :`<div class="fc" style="background:#151a22;display:grid;place-items:center;padding:8%">
+      <div style="font-family:var(--disp);font-weight:700;font-size:calc(var(--w)*.09);text-align:center">${g.short}</div></div>`;
+  const shots=(m.shots||[]).slice(0,3);
+  const shotHTML=shots.length?shots.map(s=>`<i style="background-image:url(${s})"></i>`).join("")
+    :`<i style="background-image:url(${c||""})"></i><i style="background-image:url(${c||""});filter:hue-rotate(28deg)"></i><i style="background-image:url(${c||""});filter:saturate(1.4) brightness(1.15)"></i>`;
+  const feats=(m.cats||[]).slice(0,5).map(x=>`<span>${x.replace("Full controller support","Controller").replace("Shared/Split Screen","Split screen")}</span>`).join("")
+    ||`<span>${g.badge||"PC"}</span><span>${g.via}</span>`;
+  const desc=m.desc||g.note||"Installed on drive Z: and ready to launch.";
+  const rate=(g.rate||"").split(" ")[0]||"PC";
+  return `<div class="case3d" style="--ry:-22deg">${front}
+    <div class="fc bk">
+      <div class="band"><span class="pf">${g.badge?g.badge:"PC"} · ${st.n.toUpperCase()}</span><span class="gb">GAMEBOX</span></div>
+      <div class="body">
+        <h6>${g.t}</h6>
+        <div class="shots">${shotHTML}</div>
+        <div class="desc">${desc}</div>
+        <div class="feat">${feats}</div>
+        <div class="credits">
+          ${m.dev?`<div><b>Developer</b> ${m.dev}</div>`:""}
+          ${m.pub?`<div><b>Publisher</b> ${m.pub}</div>`:""}
+          ${m.genres&&m.genres.length?`<div><b>Genre</b> ${m.genres.join(" · ")}</div>`:""}
+          ${m.rel?`<div><b>Released</b> ${m.rel}</div>`:""}
+        </div>
+      </div>
+      <div class="foot">
+        <div class="esrb"><b>${rate==="MATURE"?"M":rate==="TEEN"?"T":rate==="EVERYONE"?"E":rate[0]||"P"}</b><span>${g.rate||"RATING"}</span></div>
+        <div class="specs">
+          <div><span class="k">INSTALL</span>${g.gb} GB</div>
+          <div><span class="k">LAUNCHER</span>${g.via}</div>
+          <div><span class="k">UPDATED</span>${g.upd||"—"}</div>
+          <div><span class="k">SYSTEM</span>${m.os||"Windows"}</div>
+        </div>
+        <div class="barcode"><i></i><span>${String(1000000+g.id*7919).slice(0,7)}</span></div>
+      </div>
+    </div>
+    <div class="spine" style="background:linear-gradient(90deg,#05070c,${st.c})"><em>${g.short}</em></div>
+    <div class="gloss"></div>
+    <div class="floorshadow"></div>
+  </div>`;
+}
+const spinCase=h=>{const c=h.querySelector(".case3d");if(c){c.classList.remove("spin");void c.offsetWidth;c.classList.add("spin")}};
+
+/* ---------- rail ---------- */
+function renderRail(){
+  const n=g=>G.filter(g2=>!hidden.includes(g2.id)).filter(g).length;
+  const items=[
+   ["home","Home",'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',null],
+   ["library","All games",'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/>',n(()=>1)],
+   ["continue","Continue playing",'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',n(g=>g.played)],
+   ["installed","Installed",'<path d="M12 3v11m0 0l-4-4m4 4l4-4M4 17v3h16v-3"/>',n(g=>g.state!=="err")],
+   ["never","Never played",'<circle cx="12" cy="12" r="9"/><path d="M12 8v5m0 3h.01"/>',n(g=>g.state==="new"),1],
+   ["favorites","Favorites",'<path d="M12 4l2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"/>',favs.length],
+   ["collections","Collections",'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M7 6V4h10v2"/>',COLLECTIONS.length],
+   ["artwork","Artwork",'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 16l5-4 4 3 3-2 6 5"/>',G.filter(cov).length],
+   ["settings","Settings",'<circle cx="12" cy="12" r="3"/><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6L7 7m10 10l1.4 1.4m0-12.8L17 7M7 17l-1.4 1.4"/>',null]];
+  document.getElementById("navmain").innerHTML=items.map(([p,l,ic,c,w])=>
+    `<a href="#" data-go="${p}" class="${S.page===p?"on":""}">
+      <svg viewBox="0 0 24 24">${ic}</svg>${l}${c!=null?`<span class="${w?"warnct":"ct"}">${c}</span>`:""}</a>`).join("");
+  const bys={};G.filter(g=>!hidden.includes(g.id)).forEach(g=>bys[g.s]=(bys[g.s]||0)+1);
+  document.getElementById("navsrc").innerHTML=Object.keys(STORES).map(k=>
+    `<a href="#" data-src="${k}" class="${S.page==="source"&&S.store===k?"on":""}">
+      <i class="sq" style="background:${STORES[k].c};color:${STORES[k].c}"></i>${STORES[k].n}<span class="ct">${bys[k]||0}</span></a>`).join("")
+    +`<a href="#" class="scanopen" style="color:var(--tx3)"><i class="sq" style="background:#4a5364"></i>Xbox / Game Pass<span class="ct" style="color:var(--acc2)">Connect</span></a>`;
+  document.getElementById("navcol").innerHTML=COLLECTIONS.map(c=>{
+    const k=G.filter(g=>!hidden.includes(g.id)).filter(c.m).length;
+    return `<a href="#" data-col="${c.n}" class="${S.collection===c.n&&S.page==="collection"?"on":""}">${c.n}<span class="ct">${k}</span></a>`}).join("");
+  const bysz={};G.forEach(g=>bysz[g.s]=(bysz[g.s]||0)+g.gb);
+  const tot=Object.values(bysz).reduce((a,b)=>a+b,0);
+  document.getElementById("meter").innerHTML=Object.keys(STORES).map(k=>
+    `<i style="width:${(bysz[k]||0)/1863*100}%;background:${STORES[k].c}"></i>`).join("")+
+    `<i style="width:${(1374-tot)/1863*100}%;background:rgba(255,255,255,.18)"></i>`;
+  document.getElementById("legend").innerHTML=Object.keys(STORES).filter(k=>bysz[k]>10).map(k=>
+    `<span><b style="background:${STORES[k].c}"></b>${Math.round(bysz[k])}</span>`).join("")+
+    `<span><b style="background:rgba(255,255,255,.18)"></b>other</span>`;
+  document.getElementById("srcrows").innerHTML=Object.keys(STORES).map(k=>{
+    const cnt=bys[k]||0,sz=Math.round(bysz[k]||0);
+    return `<div class="srcrow" data-src="${k}"><i style="background:${STORES[k].c};color:${STORES[k].c}"></i>
+      <div><div class="nm">${STORES[k].n}</div><div class="st">${sz} GB installed</div></div><span class="cnt">${cnt}</span></div>`}).join("")+
+    `<div class="srcrow scanopen"><i style="background:#4a5364"></i><div><div class="nm">Xbox / Game Pass</div><div class="st">Not connected</div></div><button class="connect" type="button">Connect</button></div>`;
+}
+
+/* ---------- toolbar ---------- */
+const FILTERS=[["installed","Installed"],["never","Never played"],["update","Needs update"],["fav","Favorites"],
+               ["coop","Co-op"],["pad","Controller"],["vr","VR"]];
+function renderToolbar(){
+  const bar=document.getElementById("toolbar"),show=["library","continue","installed","never","favorites","source","collection"].includes(S.page);
+  bar.classList.toggle("hide",!show);
+  if(!show)return;
+  const v=visible();
+  document.getElementById("chips").innerHTML=
+    `<span class="chip ${S.filters.length?"":"on"}" data-f="">All <span class="n">${G.length-hidden.length}</span></span>`+
+    FILTERS.map(([k,l])=>`<span class="chip ${S.filters.includes(k)?"on":""}" data-f="${k}">${l}</span>`).join("")+
+    `<span class="count">${v.length} shown · ${fmtGB(v.reduce((a,b)=>a+b.gb,0))}</span>`;
+  document.getElementById("sortlbl").textContent=SORTS[S.sort];
+  document.getElementById("sortmenu").innerHTML=Object.entries(SORTS).map(([k,l])=>
+    `<div data-sort="${k}" class="${S.sort===k?"on":""}">${l}</div>`).join("");
+  [...document.querySelectorAll("#views button")].forEach(b=>b.classList.toggle("on",b.dataset.v===S.view));
+}
+
+/* ---------- pages ---------- */
+const content=document.getElementById("content"),bg=document.getElementById("bgart");
+function heroHTML(g){
+  const st=STORES[g.s],c=cov(g),a=amb(g),m=g.meta||{};
+  return `<div class="hero">
+    ${a?`<div class="heroart" style="background-image:url(${a})"></div>`:""}<div class="heroveil"></div>
+    <div class="cover" style="${c?`background-image:url(${c})`:""}" data-inspect="${g.id}"></div>
+    <div class="body">
+      <div class="kicker"><span class="dot"></span>${g.played?"CONTINUE PLAYING · LAST SESSION "+g.played.toUpperCase():"IN YOUR LIBRARY · NOT LAUNCHED YET"}</div>
+      <h2 class="htitle">${g.t}</h2>
+      <p class="hsub">${m.desc||g.note||"Installed on drive Z: and ready to launch."}</p>
+      <div class="hfacts">
+        <span class="storechip"><i style="background:${st.c};color:${st.c}"></i>${st.n}</span>
+        <span>Installed <b>${g.gb} GB</b></span><span>Updated <b>${g.upd}</b></span>
+        ${m.dev?`<span>By <b>${m.dev}</b></span>`:""}
+        ${m.rel?`<span>Released <b>${m.rel}</b></span>`:""}
+      </div>
+      <div class="hactions">
+        <button class="btn-play" type="button" data-play="${g.id}"><svg viewBox="0 0 24 24"><path d="M8 5l12 7-12 7z"/></svg>PLAY</button>
+        <button class="btn2" type="button" data-inspect="${g.id}"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18"/></svg>Inspect case</button>
+        <button class="btn2" type="button" data-detail="${g.id}"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg>Details</button>
+        <button class="btn2 icon ${isFav(g)?"fav":""}" type="button" data-fav="${g.id}" aria-label="Favorite"><svg viewBox="0 0 24 24"><path d="M12 4l2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"/></svg></button>
+      </div>
+      <div class="hpath"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>${g.path}</div>
+    </div>
+  </div>`;
+}
+const tileHTML=g=>{const st=STORES[g.s],[lab,cls]=stateLabel(g),c=cov(g);
+  return `<div class="tile${g.id===S.sel?" sel":""}" data-id="${g.id}" tabindex="0">
+    <div class="art" style="${c?`background-image:url(${c})`:"background:#161c26"}">
+      <span class="sdot" style="background:${st.c};color:${st.c}"></span>
+      <span class="state ${cls}">${lab}</span>
+      <span class="tacts"><button data-play="${g.id}">▶ PLAY</button><button data-inspect="${g.id}">3D</button>
+        <button class="${isFav(g)?"starred":""}" data-fav="${g.id}">★</button></span>
+    </div>
+    <div class="tfoot">${isFav(g)?'<span class="fav">★</span>':""}${STORES[g.s].n}<span class="sz">${g.gb} GB</span></div>
+  </div>`};
+
+function pageLibrary(){
+  const v=visible();
+  if(!G.length){content.className="content";content.innerHTML=
+    '<div class="empty"><b>No library yet</b>Run <code>python scan-library.py --root C:\\ --apply</code> '+
+    'to find your games, then reopen GameBox.<br><br>The scanner reads Steam, GOG and Epic where they are '+
+    'installed, sizes every folder, and pulls covers from your launcher caches.</div>';return}
+  if(!v.length){content.className="content";content.innerHTML=`<div class="empty"><b>Nothing matches</b>Try clearing the search or the filter chips.</div>`;return}
+  if(!v.find(g=>g.id===S.sel))S.sel=v[0].id;
+  if(S.view==="grid"){
+    content.className="content";
+    content.innerHTML=(["library","continue"].includes(S.page)?heroHTML(byId(S.sel)):"")+
+      `<div class="sechead"><h3>${title()}</h3><span class="n">${v.length} titles · ${fmtGB(v.reduce((a,b)=>a+b.gb,0))}</span>
+       <span class="link scanopen">⟳ Rescan library</span></div><div class="grid">${v.map(tileHTML).join("")}</div>`;
+  }else if(S.view==="list"){
+    content.className="content";
+    const cols=[["title","TITLE"],["store","STORE"],["state","STATE"],["size","SIZE (GB)"],["updated","UPDATED"],["played","LAST PLAYED"],["art","ART"],["path","INSTALL PATH"]];
+    content.innerHTML=`<table class="ltable"><thead><tr>${cols.map(([k,l])=>
+      `<th class="${k==="size"?"num":""}" data-sortcol="${k}">${l}${S.sort===k?' <span class="sortarrow">▼</span>':""}</th>`).join("")}<th></th></tr></thead>
+      <tbody>${v.map(g=>{const st=STORES[g.s],[lab,cls]=stateLabel(g),c=cov(g);
+      return `<tr data-id="${g.id}" class="${g.id===S.sel?"sel":""}">
+        <td class="title"><span class="lthumb" style="${c?`background-image:url(${c})`:""}"></span>${isFav(g)?"★ ":""}${g.t}</td>
+        <td class="st" style="color:${st.c}">${st.n}</td><td><span class="pill ${cls||"mute"}">${lab}</span></td>
+        <td class="num mono">${g.gb.toFixed(1)}</td><td class="mono">${g.upd}</td>
+        <td class="mono" style="color:${g.played?"var(--tx2)":"var(--tx3)"}">${g.played||"—"}</td>
+        <td><span class="pill ${g.art&&g.art.s==="generated"?"warn":"ok"}">${asrc(g)||"NONE"}</span></td>
+        <td class="pathcell">${g.path}</td>
+        <td style="text-align:right"><button class="rowplay" data-play="${g.id}">${g.state==="err"?"FIX":"PLAY"}</button></td></tr>`}).join("")}</tbody></table>`;
+  }else pageDetails(v);
+}
+function pageDetails(v){
+  content.className="content nopad";
+  const g=byId(S.sel),st=STORES[g.s],[lab,cls]=stateLabel(g),a=amb(g),m=g.meta||{};
+  const tabs=[["overview","Overview"],["files","Files",(g.files||[]).length],["saves","Saves"],["activity","Activity"]];
+  content.innerHTML=`<div class="dwrap">
+    <div class="dlist">${v.map(y=>{const c=cov(y);return `<div class="drow${y.id===S.sel?" sel":""}" data-id="${y.id}">
+      <span class="th" style="${c?`background-image:url(${c})`:""}"></span><span class="nm">${y.short}</span><span class="sz">${y.gb}</span></div>`}).join("")}</div>
+    <div class="dpane">${a?`<div class="dbannerart" style="background-image:url(${a})"></div>`:""}
+      <div class="dinner">
+        <div class="dbanner">
+          <div class="dstage" id="dstage" data-inspect="${g.id}"></div>
+          <div class="dmeta">
+            <div class="kicker"><span class="dot"></span>${st.n.toUpperCase()} · ${g.via.toUpperCase()}</div>
+            <h2 class="dtitle">${g.t}</h2>
+            <p class="hsub">${m.desc||g.note||""}</p>
+            <div class="hactions">
+              <button class="btn-play" type="button" data-play="${g.id}"><svg viewBox="0 0 24 24"><path d="M8 5l12 7-12 7z"/></svg>PLAY</button>
+              <button class="btn2" type="button" data-inspect="${g.id}"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18"/></svg>Inspect case</button>
+              <button class="btn2 icon ${isFav(g)?"fav":""}" type="button" data-fav="${g.id}"><svg viewBox="0 0 24 24"><path d="M12 4l2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"/></svg></button>
+              <button class="btn2" type="button" data-hide="${g.id}">Hide</button>
+            </div>
+            <div class="hpath"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>${g.path}</div>
+          </div>
+        </div>
+        <div class="dtabs">${tabs.map(([k,l,b])=>`<span class="dtab ${S.tab===k?"on":""}" data-tab="${k}">${l}${b?`<span class="b">${b}</span>`:""}</span>`).join("")}</div>
+        <div id="tabbody">${tabBody(g,lab,cls)}</div>
+      </div></div></div>`;
+  const ds=document.getElementById("dstage");
+  ds.innerHTML=caseHTML(g);ds.querySelector(".case3d").style.setProperty("--w","7.2cqw");spinCase(ds);
+  ds.addEventListener("click",()=>ds.querySelector(".case3d").classList.toggle("flip"));
+}
+function tabBody(g,lab,cls){
+  const m=g.meta||{},st=STORES[g.s];
+  if(S.tab==="files"){
+    const f=g.files||[];
+    return `<div class="dcard wide" style="margin-bottom:.5cqw"><div class="k">INSTALL PATH</div><div class="v path">${g.path}</div></div>
+     ${f.length?`<table class="ftable"><thead><tr><th>NAME</th><th style="width:8cqw">TYPE</th><th class="num" style="width:7cqw">SIZE</th></tr></thead>
+      <tbody>${f.map(x=>`<tr><td class="n ${x.d?"dir":""}">
+        <svg viewBox="0 0 24 24">${x.d?'<path d="M3 7h6l2 2h10v10H3z"/>':'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/>'}</svg>${x.n}</td>
+        <td>${x.d?"Folder":(x.n.split(".").pop()||"file").toUpperCase()+" file"}</td>
+        <td class="num">${x.d?"—":bytes(x.sz)}</td></tr>`).join("")}</tbody></table>
+      <div style="font-family:var(--mono);font-size:.55cqw;color:var(--tx3);margin-top:.4cqw">Top level only · ${g.gb} GB total on disk</div>`
+     :`<div class="empty"><b>Nothing to list</b>${g.state==="err"?"The install folder is empty — the game files are gone.":"This folder could not be read."}</div>`}`;
+  }
+  if(S.tab==="saves"){
+    const cloud=(m.cats||[]).includes("Steam Cloud");
+    return `<div class="dgrid">
+      <div class="dcard"><div class="k">CLOUD SAVES</div><div class="v" style="font-size:.8cqw;color:${cloud?"var(--ok)":"var(--tx3)"}">${cloud?"Enabled":g.s==="emu"||g.s==="local"?"Not available":"Handled by "+g.via}</div></div>
+      <div class="dcard"><div class="k">SYNCED</div><div class="v" style="font-size:.8cqw">${cloud?"2 min ago":"—"}</div></div>
+      <div class="dcard"><div class="k">SAVE HANDLER</div><div class="v" style="font-size:.8cqw">${g.via}</div></div>
+      <div class="dcard wide"><div class="k">NOTE</div><div class="v" style="font-size:.68cqw;font-family:var(--body);font-weight:400;color:var(--tx2)">
+        ${g.s==="emu"?"Emulator save states live beside the disc image in the game folder — they are not covered by any cloud service.":
+          cloud?"Saves are uploaded by "+g.via+" whenever the game closes cleanly.":"No cloud provider reported for this title. Back up the save folder yourself before moving the install."}</div></div>
+    </div>`;
+  }
+  if(S.tab==="activity"){
+    const ev=[["Last played",g.played,g.played?"a":""],["Files updated on disk",g.upd,"g"],["Added to GameBox","Sep 7, 2026",""],
+      ["Artwork resolved",asrc(g)||"none",""],["Indexed by scanner","Sep 7, 2026",""]];
+    return `<div class="tl">${ev.map(([t,w,c])=>`<div class="ev"><span class="dot ${c}"></span>
+      <span><span class="tt">${t}</span><span class="ds">${t==="Last played"&&!g.played?"never launched since install":t==="Artwork resolved"?"source used for the cover":""}</span></span>
+      <span class="when">${w||"never"}</span></div>`).join("")}</div>`;
+  }
+  return `<div class="dgrid">
+    ${m.desc?`<div class="dcard wide"><div class="k">ABOUT</div><p class="blurb" style="margin-top:.25cqw">${m.desc}</p></div>`:""}
+    ${(m.shots||[]).length?`<div class="dcard wide"><div class="k">SCREENSHOTS</div><div class="shotrow">${m.shots.map(s=>`<img src="${s}" alt="">`).join("")}</div></div>`:""}
+    <div class="dcard"><div class="k">SIZE ON DISK</div><div class="v">${g.gb} <small>GB</small></div></div>
+    <div class="dcard"><div class="k">STATE</div><div class="v" style="font-size:.8cqw;color:${cls==="err"?"var(--bad)":cls==="upd"?"var(--warn)":cls==="new"?"var(--ok)":"var(--tx)"}">${lab}</div></div>
+    <div class="dcard"><div class="k">LAST PLAYED</div><div class="v" style="font-size:.8cqw">${g.played||"Never"}</div></div>
+    ${m.dev?`<div class="dcard"><div class="k">DEVELOPER</div><div class="v" style="font-size:.75cqw">${m.dev}</div></div>`:""}
+    ${m.pub?`<div class="dcard"><div class="k">PUBLISHER</div><div class="v" style="font-size:.75cqw">${m.pub}</div></div>`:""}
+    ${m.rel?`<div class="dcard"><div class="k">RELEASED</div><div class="v" style="font-size:.8cqw">${m.rel}</div></div>`:""}
+    <div class="dcard"><div class="k">SOURCE</div><div class="v" style="font-size:.8cqw;color:${st.c}">${st.n}</div></div>
+    <div class="dcard"><div class="k">ARTWORK</div><div class="v" style="font-size:.8cqw;color:${g.art&&g.art.s==="generated"?"var(--warn)":"var(--ok)"}">${asrc(g)||"None"}</div></div>
+    <div class="dcard"><div class="k">RATING</div><div class="v" style="font-size:.8cqw">${g.rate||"—"}</div></div>
+    ${(m.genres||[]).length||(m.cats||[]).length?`<div class="dcard wide"><div class="k">GENRE &amp; FEATURES</div>
+      <div class="tagrow" style="margin-top:.3cqw">${[...(m.genres||[]),...(m.cats||[])].map(x=>`<span class="tag">${x}</span>`).join("")}</div></div>`:""}
+    <div class="dcard wide"><div class="k">INSTALL PATH</div><div class="v path">${g.path}</div></div>
+  </div>`;
+}
+function pageHome(){
+  content.className="content";
+  if(!G.length){content.innerHTML='<div class="empty"><b>Welcome to GameBox</b>'+
+    'Your library is empty. Run <code>python scan-library.py --root C:\\ --apply</code> to scan this PC, '+
+    'then reopen the app.</div>';return}
+  const played=G.filter(g=>g.played).sort((a,b)=>Date.parse(b.played)-Date.parse(a.played));
+  const recent=[...G].sort((a,b)=>Date.parse(b.upd)-Date.parse(a.upd)).slice(0,10);
+  const never=G.filter(g=>g.state==="new"),neverGB=never.reduce((a,b)=>a+b.gb,0);
+  const nodata=G.filter(g=>!g.played&&g.state!=="new").length;
+  const hero=played[0]||G[0];
+  const mini=a=>a.map(g=>`<div class="mcard" data-id="${g.id}" data-detail="${g.id}">
+      <div class="mart" style="background-image:url(${cov(g)||""})"></div>
+      <div class="mf">${STORES[g.s].n}<span class="r">${g.gb} GB</span></div></div>`).join("");
+  content.innerHTML=heroHTML(hero)+
+   `<div class="sechead"><h3>Your library at a glance</h3></div>
+    <div class="hrow">
+      <div class="statcard link" data-go="library"><div class="k">GAMES</div><div class="v">${G.length}</div><div class="s">${fmtGB(G.reduce((a,b)=>a+b.gb,0))} across 6 sources</div></div>
+      <div class="statcard warn link" data-go="never"><div class="k">NEVER PLAYED</div><div class="v">${never.length}</div><div class="s">${neverGB.toFixed(1)} GB to reclaim · ${nodata} more have no play record</div></div>
+      <div class="statcard acc link" data-go="artwork"><div class="k">ARTWORK</div><div class="v">${G.filter(cov).length}/${G.length}</div><div class="s">28 real covers · 7 generated</div></div>
+      <div class="statcard link scanopen"><div class="k">LAST SCAN</div><div class="v">6.4<small style="font-size:.7cqw"> s</small></div><div class="s">Rescan drives and stores</div></div>
+    </div>
+    <div class="sechead"><h3>Jump back in</h3><span class="n">${played.length} played</span><span class="link" data-go="continue">See all</span></div>
+    <div class="mrow">${mini(played)}</div>
+    <div class="sechead"><h3>Recently updated on disk</h3><span class="link" data-go="library">Open library</span></div>
+    <div class="mrow">${mini(recent)}</div>
+    <div class="sechead"><h3>Collections</h3><span class="link" data-go="collections">All collections</span></div>
+    <div class="colgrid">${COLLECTIONS.slice(0,3).map(c=>{const a=G.filter(c.m);
+      return `<div class="colcard" data-col="${c.n}"><div class="colstack">${a.slice(0,4).map(g=>`<i style="background-image:url(${cov(g)||""})"></i>`).join("")}</div>
+        <div class="colbody"><h4>${c.n}</h4><div class="s">${a.length} games · ${fmtGB(a.reduce((x,y)=>x+y.gb,0))}</div></div></div>`}).join("")}</div>`;
+}
+function pageCollections(){
+  content.className="content";
+  content.innerHTML=`<div class="sechead"><h3>Collections</h3><span class="n">${COLLECTIONS.length} groups · built from your library</span></div>
+    <div class="colgrid">${COLLECTIONS.map(c=>{const a=G.filter(g=>!hidden.includes(g.id)).filter(c.m);
+      return `<div class="colcard" data-col="${c.n}"><div class="colstack">${a.slice(0,4).map(g=>`<i style="background-image:url(${cov(g)||""})"></i>`).join("")}</div>
+        <div class="colbody"><h4>${c.n}</h4><div class="s">${a.length} games · ${fmtGB(a.reduce((x,y)=>x+y.gb,0))}</div></div></div>`}).join("")}</div>`;
+}
+function pageArtwork(){
+  content.className="content";
+  const by={};G.forEach(g=>{const s=g.art?g.art.s:"none";by[s]=(by[s]||0)+1});
+  content.innerHTML=`<div class="sechead"><h3>Artwork manager</h3><span class="n">${G.filter(cov).length} of ${G.length} covers</span>
+      <span class="link scanopen">⟳ Re-resolve artwork</span></div>
+    <div class="hrow" style="margin-bottom:.7cqw">
+      ${[["steam-cache","Steam cache","var(--ok)"],["gog-cache","GOG cache","var(--ok)"],["steam-cdn","Steam CDN","var(--info)"],["generated","Generated","var(--warn)"]]
+        .map(([k,l,c])=>`<div class="statcard"><div class="k">${l.toUpperCase()}</div><div class="v" style="color:${c}">${by[k]||0}</div>
+          <div class="s">${k==="generated"?"console discs and ROMs":k==="steam-cdn"?"matched by title":"already on this PC"}</div></div>`).join("")}
+    </div>
+    <div class="artgrid">${G.map(g=>{const s=g.art?g.art.s:"none";
+      return `<div class="artcell ${s==="generated"?"gen":s==="steam-cdn"?"cdn":"cache"}" data-id="${g.id}" data-detail="${g.id}">
+        <div class="a" style="background-image:url(${cov(g)||""})"></div><div class="lb">${(SRCN[s]||"none").toUpperCase()}</div></div>`}).join("")}</div>`;
+}
+function pageSettings(){
+  content.className="content";
+  const rows=[["glass","Heavy glass","Blur the panels over your library artwork",LS("glass",true)],
+    ["motion","Case animations","Spin and flip the 3D case when you select a game",LS("motion",true)],
+    ["ambient","Ambient artwork","Light the app with the selected game's art",LS("ambient",true)],
+    ["scanstart","Scan on launch","Check drives and stores every time GameBox opens",LS("scanstart",false)],
+    ["hidegen","Flag generated covers","Mark titles whose artwork was generated",LS("hidegen",true)]];
+  content.innerHTML=`<div class="sechead"><h3>Settings</h3><span class="n">stored on this machine</span></div>
+    <div class="setwrap">
+      ${rows.map(([k,t,d,v])=>`<div class="setrow"><div><div class="t">${t}</div><div class="d">${d}</div></div>
+        <div class="sw ${v?"on":""}" data-set="${k}"></div></div>`).join("")}
+      <div class="setrow"><div><div class="t">Accent colour</div><div class="d">Used for highlights, buttons and the scanner</div></div>
+        <div class="accrow">${[["#ff7a1a","#ffb648"],["#4aa3ff","#7fd0ff"],["#57d68d","#9ff0bf"],["#b47ae6","#dcb6ff"],["#ff6b6b","#ffa3a3"]]
+          .map(([a,b])=>`<div class="accdot ${LS("acc","#ff7a1a")===a?"on":""}" data-acc="${a}" data-acc2="${b}" style="background:linear-gradient(140deg,${b},${a})"></div>`).join("")}</div></div>
+      <div class="setrow"><div><div class="t">Hidden games</div><div class="d">${hidden.length} hidden — dev tools and duplicates stay out of the library</div></div>
+        <button class="btn2" data-unhide="1" style="margin-left:auto">Restore all</button></div>
+      <div class="setrow"><div><div class="t">Library data</div><div class="d">35 games indexed from drive Z: on Sep 7, 2026</div></div>
+        <button class="btn2 scanopen" style="margin-left:auto">Open scanner</button></div>
+    </div>`;
+}
+const title=()=>({library:"All games",continue:"Continue playing",installed:"Installed",never:"Never played",
+  favorites:"Favorites",source:S.store?STORES[S.store].n:"",collection:S.collection})[S.page]||"Library";
+const byId=id=>G.find(g=>g.id===id)||G[0];
+
+function renderSide(){
+  const g=byId(S.sel),st=STORES[g.s],[lab]=stateLabel(g),c=cov(g),m=g.meta||{};
+  document.getElementById("selTitle").textContent=g.t;
+  document.getElementById("selSub").textContent=`${st.n} · ${g.gb} GB · ${lab}`;
+  document.getElementById("selFacts").innerHTML=
+    `<div class="kv"><span>Store</span><b>${st.n}</b></div>
+     <div class="kv"><span>Installed size</span><b>${g.gb} GB</b></div>
+     <div class="kv"><span>Last played</span><b>${g.played||"Never"}</b></div>
+     ${m.dev?`<div class="kv"><span>Developer</span><b style="font-size:.55cqw">${m.dev}</b></div>`:""}
+     <div class="kv"><span>Artwork</span><b class="${g.art&&g.art.s==="generated"?"warnc":"ok"}">${asrc(g)||"None"}</b></div>
+     <div class="kv"><span>Files</span><b class="${g.state==="err"?"err":"ok"}">${g.state==="err"?"Missing":"Verified"}</b></div>
+     <div class="pathbox">${g.path}</div>`;
+  document.getElementById("selActs").innerHTML=
+    `<button class="btn2" data-play="${g.id}">Play</button>
+     <button class="btn2" data-detail="${g.id}">Details</button>
+     <button class="btn2 ${isFav(g)?"fav":""}" data-fav="${g.id}">${isFav(g)?"Unfavorite":"Favorite"}</button>
+     <button class="btn2" data-folder="${g.id}">Folder</button>`;
+  const mc=document.getElementById("minicase");mc.innerHTML=caseHTML(g);
+  if(LS("motion",true))spinCase(mc);
+  const a=amb(g);
+  if(LS("ambient",true)){bg.style.backgroundImage=a?`url(${a})`:"none";bg.style.opacity=a?.62:.2}
+  else{bg.style.backgroundImage="none";bg.style.opacity=.15}
+}
+function render(){
+  renderRail();renderToolbar();
+  if(S.page==="home")pageHome();
+  else if(S.page==="collections")pageCollections();
+  else if(S.page==="artwork")pageArtwork();
+  else if(S.page==="settings")pageSettings();
+  else pageLibrary();
+  renderSide();
+  document.getElementById("crumb").textContent=S.page==="source"?STORES[S.store].n:S.page==="collection"?S.collection:
+    ({home:"Home",library:"All games",continue:"Continue playing",installed:"Installed",never:"Never played",
+      favorites:"Favorites",collections:"Collections",artwork:"Artwork",settings:"Settings"})[S.page]||"Library";
+}
+function go(p){S.page=p;S.store=null;S.collection=null;content.scrollTop=0;render()}
+
+/* ---------- events ---------- */
+document.addEventListener("click",e=>{
+  const t=e.target;
+  const f=t.closest("[data-fav]");if(f){const id=+f.dataset.fav;favs=isFav(byId(id))?favs.filter(x=>x!==id):[...favs,id];SS("favs",favs);
+    showToast((isFav(byId(id))?"Added to":"Removed from")+" favorites: "+byId(id).short);render();return}
+  const h=t.closest("[data-hide]");if(h){const id=+h.dataset.hide;hidden=[...hidden,id];SS("hidden",hidden);
+    showToast(byId(id).short+" hidden — restore it in Settings");if(S.sel===id)S.sel=visible()[0]?visible()[0].id:0;render();return}
+  if(t.closest("[data-unhide]")){hidden=[];SS("hidden",hidden);showToast("All hidden games restored");render();return}
+  const p=t.closest("[data-play]");if(p){e.stopPropagation();launchGame(+p.dataset.play);return}
+  const ins=t.closest("[data-inspect]");if(ins){e.stopPropagation();openInspector(+ins.dataset.inspect,ins);return}
+  const d=t.closest("[data-detail]");if(d){S.sel=+d.dataset.detail;S.view="details";SS("view",S.view);
+    if(!["library","continue","installed","never","favorites","source","collection"].includes(S.page))S.page="library";render();return}
+  if(t.closest(".scanopen")){openScanner();return}
+  const gp=t.closest("[data-go]");if(gp){go(gp.dataset.go);return}
+  const sr=t.closest("[data-src]");if(sr){S.page="source";S.store=sr.dataset.src;S.collection=null;render();return}
+  const cl=t.closest("[data-col]");if(cl){S.page="collection";S.collection=cl.dataset.col;S.store=null;render();return}
+  const ch=t.closest("[data-f]");if(ch){const k=ch.dataset.f;
+    S.filters=k===""?[]:S.filters.includes(k)?S.filters.filter(x=>x!==k):[...S.filters,k];render();return}
+  const sc=t.closest("[data-sortcol]");if(sc){const map={title:"title",store:"store",size:"size",updated:"updated",played:"played"};
+    if(map[sc.dataset.sortcol]){S.sort=map[sc.dataset.sortcol];SS("sort",S.sort);render()}return}
+  const tb=t.closest("[data-tab]");if(tb){S.tab=tb.dataset.tab;render();return}
+  const st=t.closest("[data-set]");if(st){const k=st.dataset.set,v=!LS(k,k!=="scanstart");SS(k,v);applySettings();render();return}
+  const ac=t.closest("[data-acc]");if(ac){SS("acc",ac.dataset.acc);SS("acc2",ac.dataset.acc2);applySettings();render();return}
+  const row=t.closest("[data-id]");if(row){const id=+row.dataset.id,same=S.sel===id;S.sel=id;
+    const pops=row.classList.contains("tile")||row.classList.contains("mcard")||row.classList.contains("artcell");
+    render();if(pops||same)openInspector(id,row);return}
+});
+document.getElementById("sortbtn").addEventListener("click",e=>{e.stopPropagation();document.getElementById("sortmenu").classList.toggle("open")});
+document.getElementById("sortmenu").addEventListener("click",e=>{const d=e.target.closest("[data-sort]");
+  if(d){S.sort=d.dataset.sort;SS("sort",S.sort);document.getElementById("sortmenu").classList.remove("open");render()}});
+document.addEventListener("click",e=>{if(!e.target.closest(".dd"))document.getElementById("sortmenu").classList.remove("open")});
+document.getElementById("views").addEventListener("click",e=>{const b=e.target.closest("button");
+  if(b){S.view=b.dataset.v;SS("view",S.view);render()}});
+const qi=document.getElementById("q");
+qi.addEventListener("input",()=>{S.q=qi.value;document.getElementById("qclr").hidden=!S.q;
+  if(!["library","continue","installed","never","favorites","source","collection"].includes(S.page))S.page="library";render();qi.focus()});
+document.getElementById("qclr").addEventListener("click",()=>{qi.value="";S.q="";render()});
+document.getElementById("inspectlink").addEventListener("click",()=>openInspector(S.sel,document.getElementById("minicase")));
+document.getElementById("minicase").addEventListener("click",()=>openInspector(S.sel,document.getElementById("minicase")));
+document.getElementById("notifbtn").addEventListener("click",()=>showToast("2 notifications: Cyberpunk 2077 patch downloading · 1 install folder unreadable"));
+window.addEventListener("keydown",e=>{
+  if(e.key==="/"&&document.activeElement!==qi){e.preventDefault();qi.focus()}
+  if(e.key==="Escape"){if(document.getElementById("inspector").classList.contains("open"))closeInspector();
+    else if(document.getElementById("scanner").classList.contains("open"))closeScanner();
+    else if(document.activeElement===qi){qi.value="";S.q="";qi.blur();render()}}
+  if(document.activeElement===qi)return;
+  if((e.key==="f"||e.key==="F")&&document.getElementById("inspector").classList.contains("open")){e.preventDefault();insFlip()}
+  if((e.key==="Enter")&&!document.getElementById("inspector").classList.contains("open"))openInspector(S.sel,document.querySelector(".tile.sel")||document.getElementById("minicase"));
+  const v=visible();if(!v.length)return;const i=v.findIndex(g=>g.id===S.sel);
+  const cols=S.view==="grid"?7:1;
+  if(["ArrowRight","ArrowLeft","ArrowDown","ArrowUp"].includes(e.key)){e.preventDefault();
+    let n=i+(e.key==="ArrowRight"?1:e.key==="ArrowLeft"?-1:e.key==="ArrowDown"?cols:-cols);
+    n=Math.max(0,Math.min(v.length-1,n));S.sel=v[n].id;render();
+    const el=document.querySelector(".tile.sel,tr.sel,.drow.sel");if(el)el.scrollIntoView({block:"nearest"})}
+});
+function applySettings(){
+  const r=document.documentElement.style;
+  r.setProperty("--acc",LS("acc","#ff7a1a"));r.setProperty("--acc2",LS("acc2","#ffb648"));
+  const heavy=LS("glass",true);
+  document.querySelector(".win").style.backdropFilter=heavy?"blur(2.2cqw) saturate(150%)":"blur(.4cqw)";
+  document.querySelector(".win").style.background=heavy?"rgba(12,16,23,.5)":"rgba(10,13,19,.9)";
+}
+
+
+/* ---------- launching (native bridge, with browser fallback) ---------- */
+const BACKEND={on:false,native:false};
+function bridge(){return (window.pywebview&&window.pywebview.api)||null}
+function onBridgeReady(){
+  const api=bridge();
+  if(api&&api.status){api.status().then(j=>{
+    BACKEND.on=true;BACKEND.native=!!j.native;
+    if(j.native)document.body.classList.add("native");
+    document.getElementById("stsrc").textContent=j.app+" "+j.version+" \u00b7 "+j.games+" games ready to launch";
+  }).catch(()=>{});return true}
+  return false;
+}
+window.addEventListener("pywebviewready",onBridgeReady);
+if(!onBridgeReady()){
+  fetch("/api/status").then(r=>r.json()).then(j=>{if(j&&j.ok){BACKEND.on=true;
+    document.getElementById("stsrc").textContent="Launcher service connected \u00b7 "+j.games+" games ready";}})
+    .catch(()=>{document.getElementById("stsrc").textContent="Steam \u00b7 GOG \u00b7 Epic \u00b7 EA App detected \u00b7 read-only";});
+}
+function callApi(name,arg){
+  const api=bridge();
+  if(api&&api[name])return api[name](arg);
+  return fetch("/api/"+name+"?id="+arg).then(r=>r.json());
+}
+function launchGame(id){
+  const g=byId(id);
+  if(g.state==="err"){showToast("Cannot launch "+g.short+" \u2014 the install folder is empty");return}
+  document.querySelectorAll('[data-play="'+id+'"]').forEach(el=>{el.classList.add("launching");
+    setTimeout(()=>el.classList.remove("launching"),1400)});
+  showToast("Starting "+g.short+"\u2026");
+  if(BACKEND.on){
+    callApi("launch",id).then(j=>showToast((j.ok?"\u25b6 ":"\u2715 ")+g.short+" \u2014 "+j.msg))
+      .catch(e=>showToast("Could not launch: "+e));
+  }else if(g.lurl){
+    location.href=g.lurl;
+    showToast("Handing "+g.short+" to "+(g.lurl.indexOf("steam")===0?"Steam":"the Epic launcher")+"\u2026");
+  }else{
+    showToast(g.short+" can only be launched from the GameBox desktop app");
+  }
+}
+function openFolder(id){
+  if(BACKEND.on)callApi("folder",id).then(j=>showToast(j.msg)).catch(()=>showToast(byId(id).path));
+  else showToast(byId(id).path);
+}
+document.addEventListener("click",e=>{const f=e.target.closest("[data-folder]");if(f)openFolder(+f.dataset.folder)});
+
+/* native window controls */
+document.querySelectorAll(".wbtns button").forEach((b,i)=>b.addEventListener("click",()=>{
+  const api=bridge();if(!api)return;
+  if(i===0&&api.minimize)api.minimize();
+  else if(i===1&&api.toggle_maximize)api.toggle_maximize();
+  else if(i===2&&api.close)api.close();
+}));
+
+/* ---------- inspector ---------- */
+const insp=document.getElementById("inspector"),instage=document.getElementById("instage"),inpanel=document.getElementById("inpanel");
+let ry=-22,rx=6,drag=null,insFlipped=false;
+function insApply(){const c=instage.querySelector(".case3d");if(!c)return;
+  c.style.transform="rotateX("+rx+"deg) rotateY("+(ry+(insFlipped?180:0))+"deg)"}
+function insFlip(){insFlipped=!insFlipped;insApply();
+  showToast(insFlipped?"Back of the case \u2014 the install label":"Front cover")}
+function openInspector(id,fromEl){
+  S.sel=id;const g=byId(id),st=STORES[g.s],m=g.meta||{};
+  instage.querySelectorAll(".case3d").forEach(n=>n.remove());
+  instage.insertAdjacentHTML("beforeend",caseHTML(g));
+  const c=instage.querySelector(".case3d");ry=-22;rx=6;insFlipped=false;
+  inpanel.innerHTML=`<div class="kick">CASE INSPECTOR · ${st.n.toUpperCase()}</div>
+    <h2>${g.t}</h2><p class="hsub">${m.desc||g.note||""}</p>
+    <div class="facts">
+      <div><div class="k">SIZE</div><div class="v">${g.gb} GB</div></div>
+      <div><div class="k">LAST PLAYED</div><div class="v" style="font-size:.72cqw">${g.played||"Never"}</div></div>
+      <div><div class="k">DEVELOPER</div><div class="v" style="font-size:.68cqw">${m.dev||"—"}</div></div>
+      <div><div class="k">RELEASED</div><div class="v" style="font-size:.68cqw">${m.rel||"—"}</div></div>
+    </div>
+    <div class="p">${g.path}</div>
+    <div class="hactions">
+      <button class="btn-play" type="button" data-play="${g.id}"><svg viewBox="0 0 24 24"><path d="M8 5l12 7-12 7z"/></svg>PLAY</button>
+      <button class="btn2" id="flipbtn" type="button"><svg viewBox="0 0 24 24"><path d="M4 8a8 8 0 0 1 14-4M20 16a8 8 0 0 1-14 4"/><path d="M18 2v4h-4M6 22v-4h4"/></svg>Flip case</button>
+    </div>
+    <div class="inhint"><span class="kbd">Drag</span> rotate<span class="kbd">F</span> flip<span class="kbd">Esc</span> close</div>`;
+  insp.classList.add("open");
+  if(fromEl&&LS("motion",true)&&!matchMedia("(prefers-reduced-motion: reduce)").matches){
+    const a=fromEl.getBoundingClientRect(),b=c.getBoundingClientRect();
+    const sx=a.width/b.width,dx=(a.left+a.width/2)-(b.left+b.width/2),dy=(a.top+a.height/2)-(b.top+b.height/2);
+    c.style.transition="none";c.style.transform=`translate(${dx}px,${dy}px) scale(${Math.max(sx,.12)}) rotateX(6deg) rotateY(-70deg)`;
+    requestAnimationFrame(()=>{c.style.transition="transform .62s cubic-bezier(.2,.8,.25,1)";
+      if(!insFlipped)c.style.transform=`rotateX(6deg) rotateY(${ry}deg)`});
+  }
+  inpanel.querySelector("#flipbtn").addEventListener("click",e=>{e.stopPropagation();insFlip()});
+  renderSide();
+}
+const closeInspector=()=>insp.classList.remove("open");
+document.getElementById("inclose").addEventListener("click",closeInspector);
+insp.addEventListener("mousedown",e=>{
+  if(e.target.closest(".instage")){drag={x:e.clientX,y:e.clientY,ry,rx,moved:false};instage.classList.add("dragging")}
+  else if(!e.target.closest(".inpanel")&&!e.target.closest(".inclose"))closeInspector()});
+window.addEventListener("mousemove",e=>{if(!drag)return;
+  ry=drag.ry+(e.clientX-drag.x)*.4;rx=Math.max(-30,Math.min(30,drag.rx-(e.clientY-drag.y)*.25));
+  drag.moved=drag.moved||Math.abs(e.clientX-drag.x)>4||Math.abs(e.clientY-drag.y)>4;insApply()});
+window.addEventListener("mouseup",()=>{if(drag){instage.classList.remove("dragging");setTimeout(()=>{drag=null},0)}});
+instage.addEventListener("click",e=>{if(e.target.closest("[data-play]"))return;if(!drag||!drag.moved)insFlip()});
+
+/* ---------- scanner ---------- */
+const TARGETS=[{n:"Drive Z:",p:"1.82 TB · NTFS",found:35},{n:"Steam",p:"Z:\\SteamLibrary\\steamapps",found:10},
+ {n:"GOG Galaxy",p:"galaxy-2.0.db · 148 releases",found:10},{n:"Epic Games",p:"ProgramData\\Epic\\…\\Manifests",found:5},
+ {n:"EA App",p:"Z:\\ · EA install registry",found:3},{n:"Emulators",p:"RPCS3 · PCSX2 2.8.1 · mGBA",found:6}];
+const STEPS=[[0,"t","Scanner started — 6 targets queued"],[0,"","Mounting Z:\\ … 1.82 TB NTFS, 489 GB free"],
+ [1,"","Steam library found: Z:\\SteamLibrary\\steamapps"],[1,"","appmanifest_47810.acf → Dragon Age: Origins UE · 23.7 GB"],
+ [1,"ok2","10 Steam titles indexed · 473.9 GB"],[2,"","Opening GOG galaxy-2.0.db … 148 library releases"],
+ [2,"ok2","10 GOG titles installed · 188.5 GB · covers found in webcache"],
+ [3,"","Parsing Epic manifests … 8 entries, 3 are dev tools (skipped)"],
+ [3,"ok2","5 Epic games indexed · 282.6 GB"],[4,"","EA App: Mass Effect LE, Andromeda, Dragon Age Veilguard"],
+ [4,"ok2","3 EA titles indexed · 248.7 GB"],[5,"","Emulator hosts: RPCS3, PCSX2 2.8.1, mGBA"],
+ [5,"ok2","6 emulated discs indexed · 23.0 GB"],
+ [5,"w2","Z:\\Activision\\Spider-Man Web of Shadows — 0 B, files missing"],
+ [5,"a2","Metadata: 28 titles matched · 84 screenshots cached"],
+ [5,"ok2","Done — 35 games · 1.19 TB · 6.4 s"]];
+const scanner=document.getElementById("scanner"),slog=document.getElementById("scanlog"),sfill=document.getElementById("scanfill"),
+      sfound=document.getElementById("scanfound"),stg=document.getElementById("scantargets"),toast=document.getElementById("toast");
+let scanTimer=[];
+function paintTargets(active){
+  stg.innerHTML='<div class="lbl">SCAN TARGETS</div>'+TARGETS.map((t,i)=>{
+    const cls=active===null?"":i<active?"done":i===active?"busy":"";
+    return `<div class="tgt ${cls}"><span class="mk">${active!==null&&i<active?"✓":""}</span>
+      <span><span class="nm">${t.n}</span><span class="pp">${t.p}</span></span>
+      <span class="ct2">${active!==null&&i<active?t.found:"—"}</span></div>`}).join("");
+}
+function openScanner(){scanner.classList.add("open");slog.innerHTML="";sfound.innerHTML="";sfill.style.width="0";paintTargets(null);
+  document.getElementById("scansum").textContent="Ready to scan 6 targets — Steam, GOG, Epic, EA App, emulators and drive Z:.";
+  ["scantime|0.0 s","scangames|0","scansize|0 TB","scanart|0"].forEach(s=>{const[a,b]=s.split("|");document.getElementById(a).textContent=b})}
+function closeScanner(){scanner.classList.remove("open");scanTimer.forEach(clearTimeout);scanTimer=[]}
+function runScan(){
+  slog.innerHTML="";sfound.innerHTML="";scanTimer.forEach(clearTimeout);scanTimer=[];
+  const withArt=G.filter(cov);
+  STEPS.forEach((s,i)=>scanTimer.push(setTimeout(()=>{
+    const d=document.createElement("div");
+    d.innerHTML=`<span class="t">[${(i*0.4).toFixed(2)}]</span> <span class="${s[1]}">${s[2]}</span>`;
+    slog.appendChild(d);slog.scrollTop=slog.scrollHeight;paintTargets(s[0]);
+    sfill.style.width=Math.round((i+1)/STEPS.length*100)+"%";
+    document.getElementById("scantime").textContent=(i*0.4).toFixed(1)+" s";
+    document.getElementById("scangames").textContent=Math.round(35*(i+1)/STEPS.length);
+    document.getElementById("scansize").textContent=(1.19*(i+1)/STEPS.length).toFixed(2)+" TB";
+    document.getElementById("scanart").textContent=Math.round(35*(i+1)/STEPS.length);
+    const g2=withArt[(i*2)%withArt.length];
+    if(g2){const el=document.createElement("i");el.style.backgroundImage=`url(${cov(g2)})`;sfound.prepend(el);
+      while(sfound.children.length>18)sfound.lastChild.remove()}
+    if(i===STEPS.length-1){document.getElementById("scansum").innerHTML="<b>35 games</b> · 1.19 TB · 6 sources · 35 covers · 1 problem found";
+      showToast("Scan complete — 35 games, 1 install folder unreadable")}
+  },i*330)));
+}
+function showToast(t){document.getElementById("toasttx").textContent=t;toast.classList.add("show");
+  clearTimeout(showToast._t);showToast._t=setTimeout(()=>toast.classList.remove("show"),4000)}
+document.getElementById("scanclose").addEventListener("click",closeScanner);
+document.getElementById("scancancel").addEventListener("click",closeScanner);
+document.getElementById("scanrun").addEventListener("click",()=>{
+  runScan();
+  const api=bridge();
+  if(api&&api.rescan)api.rescan().then(j=>{if(j&&j.msg)showToast(j.msg)}).catch(()=>{});
+});
+scanner.addEventListener("mousedown",e=>{if(e.target===scanner)closeScanner()});
+
+if(typeof window.pywebview!=="undefined")document.body.classList.add("native");
+applySettings();
+S.sel=(G.find(g=>g.played)||G[0]).id;
+render();
+</script>

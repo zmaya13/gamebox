@@ -1,0 +1,14 @@
+build/
+dist/
+__pycache__/
+*.pyc
+*.spec
+launch.json
+library.json
+GameBox.exe
+GameBox-Setup-*.exe
+GameBox-v1-backup.html
+
+# a scanned GameBox.html holds your own library and
+# publisher artwork - keep it local
+/GameBox.local.html
