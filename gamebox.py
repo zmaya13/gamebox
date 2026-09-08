@@ -18,6 +18,7 @@ import glob
 import json
 import os
 import queue
+import shutil
 import string
 import subprocess
 import sys
@@ -27,7 +28,7 @@ import webbrowser
 import webview
 
 APP_NAME = "GameBox"
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 NO_WINDOW = 0x08000000  # CREATE_NO_WINDOW
 
 # Populated by scan-library.py into launch.json next to the app.
@@ -85,7 +86,35 @@ WS_SYSMENU = 0x00080000
 SWP_FLAGS = 0x0002 | 0x0001 | 0x0004 | 0x0020  # NOMOVE|NOSIZE|NOZORDER|FRAMECHANGED
 
 
-def make_resizable_frameless():
+def app_hwnd():
+    """This process's visible top-level window. A frameless window has no
+    caption to search for, so go by process."""
+    try:
+        h = int(webview.windows[0].native.Handle)
+        if h:
+            return h
+    except Exception:
+        pass
+    user32 = ctypes.windll.user32
+    found = []
+    pid = os.getpid()
+    WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+
+    def cb(hwnd, _lparam):
+        owner = ctypes.c_ulong()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
+        if owner.value == pid and user32.IsWindowVisible(hwnd):
+            found.append(hwnd)
+        return True
+
+    try:
+        user32.EnumWindows(WNDENUMPROC(cb), 0)
+    except Exception:
+        return 0
+    return found[0] if found else 0
+
+
+def make_resizable_frameless(geometry=None):
     """A frameless window still needs resize borders and Aero Snap.
 
     Windows hands those to WS_THICKFRAME, which a borderless form drops. Put
@@ -94,34 +123,11 @@ def make_resizable_frameless():
     """
     import time
 
-    def find_hwnd():
-        """A frameless window has no caption to search for, so go by process."""
-        try:
-            h = int(webview.windows[0].native.Handle)
-            if h:
-                return h
-        except Exception:
-            pass
-        user32 = ctypes.windll.user32
-        found = []
-        pid = os.getpid()
-        WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
-
-        def cb(hwnd, _lparam):
-            owner = ctypes.c_ulong()
-            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
-            if owner.value == pid and user32.IsWindowVisible(hwnd):
-                found.append(hwnd)
-            return True
-
-        try:
-            user32.EnumWindows(WNDENUMPROC(cb), 0)
-        except Exception:
-            return 0
-        return found[0] if found else 0
+    find_hwnd = app_hwnd
 
     def apply():
         user32 = ctypes.windll.user32
+        placed = False
         # The form is created and restyled by the toolkit as it shows, so keep
         # re-asserting the flags for a couple of seconds until they stick.
         for _ in range(40):
@@ -135,6 +141,12 @@ def make_resizable_frameless():
                         user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_FLAGS)
                     # A packaged build can leave the frameless form created but
                     # never shown, so show it ourselves once it exists.
+                    if geometry and not placed:
+                        user32.SetWindowPos(hwnd, 0, geometry["x"], geometry["y"],
+                                            geometry["w"], geometry["h"], 0x0004 | 0x0010)
+                        if geometry.get("max"):
+                            user32.ShowWindow(hwnd, 3)  # SW_MAXIMIZE
+                        placed = True
                     if not user32.IsWindowVisible(hwnd):
                         user32.ShowWindow(hwnd, 5)      # SW_SHOW
                         user32.SetForegroundWindow(hwnd)
@@ -145,6 +157,69 @@ def make_resizable_frameless():
             time.sleep(0.1)
 
     threading.Thread(target=apply, daemon=True).start()
+
+
+# --------------------------------------------------------------------- window
+class _RECT(ctypes.Structure):
+    _fields_ = [("left", ctypes.c_long), ("top", ctypes.c_long),
+                ("right", ctypes.c_long), ("bottom", ctypes.c_long)]
+
+
+class _PLACEMENT(ctypes.Structure):
+    _fields_ = [("length", ctypes.c_uint), ("flags", ctypes.c_uint),
+                ("showCmd", ctypes.c_uint),
+                ("ptMinX", ctypes.c_long), ("ptMinY", ctypes.c_long),
+                ("ptMaxX", ctypes.c_long), ("ptMaxY", ctypes.c_long),
+                ("rcNormal", _RECT)]
+
+
+def work_area():
+    """The desktop minus the taskbar, on the monitor the window will open on."""
+    r = _RECT()
+    if ctypes.windll.user32.SystemParametersInfoW(0x0030, 0, ctypes.byref(r), 0):
+        return r.left, r.top, r.right - r.left, r.bottom - r.top
+    return 0, 0, 1600, 940
+
+
+def default_geometry():
+    """Fill the screen, minus a small margin, on a machine we have not seen."""
+    x, y, w, h = work_area()
+    m = int(min(w, h) * 0.03)
+    return {"x": x + m, "y": y + m, "w": w - m * 2, "h": h - m * 2, "max": True}
+
+
+def saved_geometry(store):
+    g = store.get("window") or {}
+    d = default_geometry()
+    try:
+        out = {"x": int(g["x"]), "y": int(g["y"]),
+               "w": max(1100, int(g["w"])), "h": max(660, int(g["h"])),
+               "max": bool(g.get("max"))}
+    except (KeyError, TypeError, ValueError):
+        return d
+    # a window remembered on a monitor that is no longer attached would open
+    # off-screen, so fall back to the default when it does not fit
+    sx, sy, sw, sh = work_area()
+    if out["x"] > sx + sw - 200 or out["y"] > sy + sh - 200 or        out["x"] + out["w"] < sx + 200 or out["y"] < sy - 200:
+        return d
+    return out
+
+
+def read_geometry():
+    """Where the window is now, as it would be if it were not maximised."""
+    try:
+        hwnd = app_hwnd()
+        if not hwnd:
+            return None
+        p = _PLACEMENT()
+        p.length = ctypes.sizeof(_PLACEMENT)
+        if not ctypes.windll.user32.GetWindowPlacement(hwnd, ctypes.byref(p)):
+            return None
+        r = p.rcNormal
+        return {"x": r.left, "y": r.top, "w": r.right - r.left, "h": r.bottom - r.top,
+                "max": bool(ctypes.windll.user32.IsZoomed(hwnd))}
+    except Exception:
+        return None
 
 
 # ---------------------------------------------------------------------- the API
@@ -170,21 +245,50 @@ class Api:
         return {"ok": True}
 
     def toggle_maximize(self):
+        # ask Windows, rather than tracking a flag: the window can also be
+        # maximised by a double-click on the bar, Win+Up, or restored geometry
         w = webview.windows[0]
-        if getattr(w, "_max", False):
+        try:
+            maxed = bool(ctypes.windll.user32.IsZoomed(app_hwnd()))
+        except Exception:
+            maxed = getattr(w, "_max", False)
+        if maxed:
             w.restore()
         else:
             w.maximize()
-        w._max = not getattr(w, "_max", False)
-        return {"ok": True, "maximized": w._max}
+        w._max = not maxed
+        return {"ok": True, "maximized": not maxed}
 
     def close(self):
+        self.remember_window()
         webview.windows[0].destroy()
         return {"ok": True}
 
+    def remember_window(self):
+        g = read_geometry()
+        if g:
+            self.settings_set({"window": g})
+        return {"ok": bool(g)}
+
     def reload(self):
-        html = user_file("GameBox.html")
-        webview.windows[0].load_url("file:///" + html.replace("\\", "/"))
+        """Reopen the app so the page written by the scan is the page shown.
+
+        load_url() on the same file:// URL hands back WebView2's cached copy,
+        so after a first scan the library still looked empty; a file:// URL
+        cannot be cache-busted with a query, because the whole string is taken
+        as the path. Starting a fresh process is the one thing that reliably
+        shows the new library.
+        """
+        try:
+            if getattr(sys, "frozen", False):
+                cmd = [sys.executable]
+            else:
+                cmd = [sys.executable, os.path.abspath(__file__)]
+            subprocess.Popen(cmd, cwd=os.path.dirname(user_file("GameBox.html")),
+                             creationflags=NO_WINDOW | 0x00000008)  # DETACHED_PROCESS
+        except Exception as e:
+            return {"ok": False, "msg": str(e)}
+        threading.Timer(0.4, lambda: webview.windows[0].destroy()).start()
         return {"ok": True}
 
     # ---- settings
@@ -351,21 +455,57 @@ def main():
     TABLE = load_launch_table()
     html = user_file("GameBox.html")
     if not os.path.exists(html):
-        html = resource("GameBox.html")
+        # a fresh install ships the page as GameBox.blank.html, so that
+        # upgrading never overwrites the library a scan wrote into it
+        for seed in (user_file("GameBox.blank.html"), resource("GameBox.html")):
+            if os.path.exists(seed):
+                try:
+                    shutil.copyfile(seed, html)
+                except OSError:
+                    html = seed
+                break
+        else:
+            html = resource("GameBox.html")
 
-    webview.create_window(
+    api = Api()
+    geom = saved_geometry(api.settings_get())
+
+    win = webview.create_window(
         APP_NAME,
         url="file:///" + html.replace("\\", "/"),
-        width=1600, height=940,
+        width=geom["w"], height=geom["h"],
+        x=geom["x"], y=geom["y"],
         min_size=(1100, 660),
         background_color="#06070B",
         resizable=True,
         frameless=True,          # the title bar lives in the UI
         easy_drag=False,         # dragging is limited to .pywebview-drag-region
         text_select=False,
-        js_api=Api(),
+        js_api=api,
     )
-    webview.start(make_resizable_frameless, gui="edgechromium", private_mode=False,
+    # Remember the window as the user leaves it. Handlers take whatever
+    # arguments pywebview passes, and must not return False - that cancels the
+    # close. Resizing is debounced so a drag writes the file once.
+    def remember_soon(*_a):
+        t = getattr(remember_soon, "_t", None)
+        if t:
+            t.cancel()
+        remember_soon._t = threading.Timer(0.8, api.remember_window)
+        remember_soon._t.daemon = True
+        remember_soon._t.start()
+
+    def remember_now(*_a):
+        api.remember_window()
+        return None
+
+    win.events.closing += remember_now
+    for ev in ("resized", "moved", "maximized", "restored"):
+        try:
+            getattr(win.events, ev).__iadd__(remember_soon)
+        except AttributeError:
+            pass
+    webview.start(lambda: make_resizable_frameless(geom),
+                  gui="edgechromium", private_mode=False,
                   storage_path=os.path.join(os.environ.get("LOCALAPPDATA", "."), "GameBox"))
 
 

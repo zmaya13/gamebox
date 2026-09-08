@@ -1373,11 +1373,16 @@ function onBridgeReady(){
   return false;
 }
 window.addEventListener("pywebviewready",onBridgeReady);
-if(!onBridgeReady()){
+/* The ready event can fire while this file is still being parsed - a scanned
+   page carries every cover with it - and a missed event left the app read-only,
+   with Play refusing to launch anything. So poll for the bridge as well. */
+(function waitForBridge(n){
+  if(onBridgeReady())return;
+  if(n<80){setTimeout(function(){waitForBridge(n+1)},150);return}
   fetch("/api/status").then(r=>r.json()).then(j=>{if(j&&j.ok){BACKEND.on=true;
     document.getElementById("stsrc").textContent="Launcher service connected \u00b7 "+j.games+" games ready";}})
     .catch(()=>{document.getElementById("stsrc").textContent="Steam \u00b7 GOG \u00b7 Epic \u00b7 EA App detected \u00b7 read-only";});
-}
+})(0);
 function callApi(name,arg){
   const api=bridge();
   if(api&&api[name])return api[name](arg);

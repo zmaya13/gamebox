@@ -3,7 +3,7 @@
 Unicode true
 
 !define APP      "GameBox"
-!define VERSION  "1.2.0"
+!define VERSION  "1.2.1"
 !define PUBLISHER "GameBox contributors"
 !define WEBSITE  "https://github.com/zmaya13/gamebox"
 
@@ -37,7 +37,10 @@ Section "GameBox" SecMain
   SectionIn RO
   SetOutPath "$INSTDIR"
   File "GameBox.exe"
-  File "GameBox.html"
+  ; The page carries the library the scanner writes into it, so an upgrade must
+  ; not overwrite it. Ship a blank copy; the app seeds GameBox.html from it the
+  ; first time it runs.
+  File "/oname=GameBox.blank.html" "GameBox.html"
   File "GameBox.ico"
   File "scan-library.py"
   File "README.md"
@@ -62,6 +65,7 @@ SectionEnd
 Section "Uninstall"
   Delete "$INSTDIR\GameBox.exe"
   Delete "$INSTDIR\GameBox.html"
+  Delete "$INSTDIR\GameBox.blank.html"
   Delete "$INSTDIR\GameBox.ico"
   Delete "$INSTDIR\scan-library.py"
   Delete "$INSTDIR\launch.json"
