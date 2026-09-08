@@ -1104,7 +1104,7 @@ function pageHome(){
   const never=G.filter(g=>g.state==="new"),neverGB=never.reduce((a,b)=>a+b.gb,0);
   const nodata=G.filter(g=>!g.played&&g.state!=="new").length;
   const hero=played[0]||G[0];
-  const mini=a=>a.map(g=>`<div class="mcard" data-id="${g.id}" data-detail="${g.id}">
+  const mini=a=>a.map(g=>`<div class="mcard" data-id="${g.id}">
       <div class="mart" style="background-image:url(${cov(g)||""})"></div>
       <div class="mf">${STORES[g.s].n}<span class="r">${g.gb} GB</span></div></div>`).join("");
   content.innerHTML=heroHTML(hero)+
@@ -1142,7 +1142,7 @@ function pageArtwork(){
           <div class="s">${k==="generated"?"console discs and ROMs":k==="steam-cdn"?"matched by title":"already on this PC"}</div></div>`).join("")}
     </div>
     <div class="artgrid">${G.map(g=>{const s=g.art?g.art.s:"none";
-      return `<div class="artcell ${s==="generated"?"gen":s==="steam-cdn"?"cdn":"cache"}" data-id="${g.id}" data-detail="${g.id}">
+      return `<div class="artcell ${s==="generated"?"gen":s==="steam-cdn"?"cdn":"cache"}" data-id="${g.id}">
         <div class="a" style="background-image:url(${cov(g)||""})"></div><div class="lb">${(SRCN[s]||"none").toUpperCase()}</div></div>`}).join("")}</div>`;
 }
 function pageSettings(){

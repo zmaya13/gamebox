@@ -102,10 +102,21 @@ def find_emulator(ext, roots=()):
     return None
 
 
-SKIP_FOLDERS = {"system volume information", "$recycle.bin", "windows", "program files",
-                "program files (x86)", "programdata", "users", "temp", "tmp", "downloads",
-                "backup", "tools", "code", "files", "media & captures", "projects & code"}
-SKIP_TITLES = {"unreal engine", "quixel bridge", "fab ue plugin", "epic online services"}
+SKIP_FOLDERS = {"system volume information", "$recycle.bin", "windows", "windows.old",
+                "program files", "program files (x86)", "programdata", "users", "temp", "tmp",
+                "downloads", "documents", "pictures", "music", "videos", "desktop", "onedrive",
+                "backup", "tools", "code", "files", "camera", "camera01", "drivers", "intel",
+                "nvidia", "amd", "perflogs", "inetpub", "recovery", "msocache", "config.msi",
+                "media & captures", "projects & code", "archived office temps", "installers & builds",
+                "ai", "antigravity", "watson code", "new folder", "$windows.~bt", "$windows.~ws"}
+SKIP_PATTERNS = (re.compile(r"^backup[_\- ]", re.I), re.compile(r"^\$", re.I),
+                 re.compile(r"^windows", re.I), re.compile(r"^python\d", re.I),
+                 re.compile(r"redist|directx|vcredist|dotnet|\.net|visual c\+\+", re.I))
+SKIP_TITLES = {"unreal engine", "quixel bridge", "fab ue plugin", "epic online services",
+               "steamworks common redistributables", "steamvr", "steam linux runtime",
+               "proton", "steam controller configs", "spacewar", "half-life 2 demo"}
+# Steam publishes tooling under the same manifest format as games; these are not games.
+SKIP_APPIDS = {"228980", "250820", "1070560", "1391110", "1493710", "1628350", "1826330"}
 
 
 def human(n):
@@ -162,6 +173,8 @@ def scan_steam(roots):
                 continue
             g = lambda k: (re.search(r'"%s"\s+"([^"]*)"' % k, t) or [None, None])[1]
             if not g("name"):
+                continue
+            if g("appid") in SKIP_APPIDS or norm(g("name")) in {norm(x) for x in SKIP_TITLES}:
                 continue
             out.append({"title": g("name"), "store": "steam", "appid": g("appid"),
                         "bytes": int(g("SizeOnDisk") or 0), "updated": ts(g("LastUpdated")),
@@ -232,30 +245,41 @@ def scan_epic():
     return out
 
 
-def scan_folders(root, min_gb=0.2):
+def looks_like_a_game(name):
+    if name.lower() in SKIP_FOLDERS or name.startswith("."):
+        return False
+    return not any(p.search(name) for p in SKIP_PATTERNS)
+
+
+def scan_folders(root, min_gb=0.5):
+    """One game per top-level folder - but only if it actually looks like a game.
+
+    A folder qualifies when it holds a launchable executable or a disc image.
+    Size alone is not evidence: backups, camera dumps and toolchains are big too.
+    """
     out = []
     if not os.path.isdir(root):
         return out
     for name in sorted(os.listdir(root)):
         p = os.path.join(root, name)
-        if not os.path.isdir(p) or name.lower() in SKIP_FOLDERS or name.startswith("."):
-            continue
-        size = folder_size(p)
-        if size < min_gb * GB:
+        if not os.path.isdir(p) or not looks_like_a_game(name):
             continue
         exe = best_exe(p)
         disc = first_match(p, (".iso", ".gb", ".gbc", ".chd"))
+        if not exe and not disc:
+            continue                      # no launchable payload: not a game
+        size = folder_size(p)
+        if size < min_gb * GB and not disc:
+            continue
         entry = {"title": name, "store": "local", "path": p, "bytes": size,
                  "updated": ts(os.path.getmtime(p)), "via": "Direct executable"}
         if exe:
-            entry["launch"] = ("exe", exe)
+            entry["launch"] = ("exe", exe, p)
         elif disc:
             emu = find_emulator(os.path.splitext(disc)[1].lower(), [root])
             entry["via"] = os.path.basename(emu) if emu else "Disc image"
             entry["store"] = "emu"
             entry["launch"] = ("emu", emu, disc) if emu else ("none", "")
-        else:
-            entry["launch"] = ("none", "")
         out.append(entry)
     return out
 
@@ -441,8 +465,10 @@ def apply_to_html(games, target=None):
         return False
     src = open(path, encoding="utf-8").read()
     payload = json.dumps(games, separators=(",", ":"), ensure_ascii=False)
-    new, n = re.subn(r"const G=.*?;\nconst STORES", "const G=" + payload + ";\nconst STORES",
-                     src, count=1, flags=re.S)
+    block = "const G=" + payload + ";\nconst STORES"
+    # Replace with a lambda: re.sub processes escapes in a string replacement,
+    # which would eat the backslashes out of every Windows path.
+    new, n = re.subn(r"const G=.*?;\nconst STORES", lambda _m: block, src, count=1, flags=re.S)
     if not n:
         print("! could not find the library block in %s" % os.path.basename(path))
         return False
@@ -467,7 +493,9 @@ def main():
                     help="write the library into GameBox.html (or the file you name)")
     ap.add_argument("--no-meta", action="store_true", help="covers only, skip store metadata")
     a = ap.parse_args()
-    roots = a.root or [os.environ.get("GAMEBOX_ROOT", "C:\\")]
+    roots = a.root or [r for r in (os.environ.get("GAMEBOX_ROOT", "").split(";")) if r]
+    if not roots:
+        ap.error("give at least one --root, e.g. --root C:\\Games --root D:\\")
 
     t0 = time.time()
     print("GameBox scanner - roots: %s\n" % ", ".join(roots))
