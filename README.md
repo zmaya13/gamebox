@@ -7,6 +7,16 @@ GameBox is a small native Windows app. It scans what is actually installed on yo
 drives, pulls the cover art your launchers already cached, and gives you a single
 library to browse and launch from. No account, no telemetry, no background service.
 
+## Built with AI, and I am not hiding it
+
+Yes — this was built with AI. Claude Code wrote the code. AI is a tool, the same as
+a compiler or an IDE, and I used it like one. What I brought is the creative vision,
+the testing, and the error-hunting: I decided what this should be, I ran it until it
+broke, and I refined and fixed the bugs until it worked.
+
+This is a free project, made for fun. No complaining, no whining. Use it or don't —
+doesn't matter to me.
+
 ## Why
 
 Most people's games are scattered across four launchers and a folder of disc images.
