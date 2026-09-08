@@ -28,6 +28,9 @@ them touches the ISO sitting on your D: drive. GameBox is the shelf that holds a
 - **A 3D case for every game.** Click a game and its case flies out of the tile; drag
   to rotate it, press `F` to flip it over. The back is a real box back — screenshots,
   blurb, feature list, credits, rating box, spec panel, barcode.
+- **It knows who you are.** Setup asks for a name, and you can change it (and your
+  avatar) any time in Settings. It is kept in `gamebox-settings.json` beside the app
+  and never leaves the machine.
 
 ## Views
 

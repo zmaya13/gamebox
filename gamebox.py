@@ -157,9 +157,13 @@ class Api:
 
     # ---- window
     def status(self):
+        st = self.settings_get()
         return {"ok": True, "app": APP_NAME, "version": VERSION,
                 "games": len(TABLE), "native": True,
-                "setup_done": bool(self.settings_get().get("setup_done"))}
+                "setup_done": bool(st.get("setup_done")),
+                "profile": st.get("profile") or {},
+                # a first name to offer during setup; the user can change it
+                "user": (os.environ.get("USERNAME") or "").split("@")[0]}
 
     def minimize(self):
         webview.windows[0].minimize()
