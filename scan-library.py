@@ -577,8 +577,8 @@ def main():
 
     # Merge duplicates. A store entry always wins over a bare folder, and the
     # match is on the install path as well as the title, because a folder is
-    # frequently named nothing like the game it holds (GTAVEnhanced,
-    # MarvelRivalsjKtnW, AtomEveaCBnD).
+    # frequently named nothing like the game it holds - launchers use their own
+    # slugs, and some add a random suffix.
     def keys(g):
         out = [("t", norm(g["title"]))]
         p = (g.get("path") or "").replace("/", "\\").rstrip("\\").lower()

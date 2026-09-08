@@ -642,7 +642,7 @@ body.native .tbar .logo{cursor:default}
     <div class="logo" data-go="home"><div class="mark"></div><div class="wm">GAME<span>BOX</span></div></div>
     <div class="sep"></div>
     <div class="crumbs">Library <span>/</span> <b id="crumb">Home</b></div>
-    <div class="syncpill scanopen"><i></i><span id="synctx">6 sources synced</span></div>
+    <div class="syncpill scanopen"><i></i><span id="synctx">No library yet</span></div>
     <div class="wbtns">
       <button type="button" id="wmin" aria-label="Minimize"><svg viewBox="0 0 12 12"><path d="M1.5 6h9"/></svg></button>
       <button type="button" id="wmax" aria-label="Maximize"><svg viewBox="0 0 12 12"><rect x="1.7" y="1.7" width="8.6" height="8.6" rx=".6"/></svg></button>
@@ -661,7 +661,7 @@ body.native .tbar .logo{cursor:default}
       </div>
       <div class="railfoot">
         <div class="drive">
-          <div class="r"><span>Storage</span><b>--</b></div>
+          <div class="r"><span>Storage</span><b id="stotal">--</b></div>
           <div class="meter" id="meter"></div>
           <div class="legend" id="legend"></div>
         </div>
@@ -702,11 +702,8 @@ body.native .tbar .logo{cursor:default}
       <div class="status">
         <span class="s ok"><b></b><span id="stsrc">Steam · GOG · Epic · EA App connected</span></span>
         <span class="s info"><b></b><span id="start">Artwork: 28 real covers · 7 generated</span></span>
-        <span class="s warn"><b></b>1 install folder unreadable</span>
-        <div class="right">
-          
-          <span>No library yet</span>
-        </div>
+        <span class="s warn" id="stwarn" style="display:none"><b></b><span id="stwarntx"></span></span>
+        <div class="right"><span id="stright">No library yet</span></div>
       </div>
     </div>
 
@@ -767,32 +764,6 @@ body.native .tbar .logo{cursor:default}
     </div>
   </div>
 
-  <div class="scanner" id="scanner">
-    <div class="scanpanel">
-      <div class="scanhead">
-        <div class="ico"><svg viewBox="0 0 24 24"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3"/><path d="M3 12h18"/></svg></div>
-        <div><h3>Library scanner</h3><div class="sub">Drives, stores and emulators — reads what is actually installed</div></div>
-        <button class="close" id="scanclose" type="button" aria-label="Close scanner"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-      </div>
-      <div class="scanbody">
-        <div class="scantargets" id="scantargets"><div class="lbl">SCAN TARGETS</div></div>
-        <div class="scanmain">
-          <div class="scanbar"><i id="scanfill"></i></div>
-          <div class="scanmeta">
-            <span>Elapsed <b id="scantime">0.0 s</b></span><span>Games <b id="scangames">0</b></span>
-            <span>Size <b id="scansize">0 TB</b></span><span>Artwork <b id="scanart">0</b></span>
-          </div>
-          <div class="scanlog" id="scanlog"></div>
-          <div class="scanfound" id="scanfound"></div>
-        </div>
-      </div>
-      <div class="scanfoot">
-        <div class="sum" id="scansum">Ready to scan 6 targets.</div>
-        <div class="btns">
-          <button class="btn2" id="scancancel" type="button">Close</button>
-          <button class="btn-play" id="scanrun" type="button" style="height:1.9cqw;font-size:.75cqw;padding:0 .9cqw">START SCAN</button>
-        </div>
-      </div>
     </div>
   </div>
   <div class="toast" id="toast"><span class="dotok"></span><span id="toasttx">Ready</span></div>
@@ -812,14 +783,29 @@ const G=/*LIBRARY*/[];
 const STORES={steam:{n:"Steam",c:"var(--steam)"},gog:{n:"GOG",c:"var(--gog)"},epic:{n:"Epic",c:"var(--epic)"},
  ea:{n:"EA App",c:"var(--ea)"},emu:{n:"Emulated",c:"var(--emu)"},local:{n:"Folder",c:"var(--local)"}};
 const SRCN={"steam-cache":"Steam cache","gog-cache":"GOG cache","steam-cdn":"Steam CDN","generated":"Generated"};
-const COLLECTIONS=[
- {n:"Saints Row",m:g=>/^Saints Row/.test(g.t)},
- {n:"Prince of Persia",m:g=>/Prince of Persia/.test(g.t)},
- {n:"Mass Effect",m:g=>/^Mass Effect/.test(g.t)},
- {n:"Dragon Age",m:g=>/^Dragon Age/.test(g.t)},
- {n:"Emulated discs",m:g=>g.s==="emu"},
- {n:"Couch co-op",m:g=>(g.meta&&g.meta.cats||[]).some(c=>/Co-op|Split/.test(c))}
-];
+/* Collections are derived from the library that is actually here: any series with
+   two or more games, plus a few rules that hold for any library. */
+const SMALLWORDS=new Set(["of","the","and","a","an","de","in","at","on","to","for","vs"]);
+function seriesKey(t){
+  const words=t.replace(/[:–—].*$/,"").split(/\s+/).filter(Boolean);
+  const out=[];let real=0;
+  for(const w of words){out.push(w);if(!SMALLWORDS.has(w.toLowerCase()))real++;
+    if(real>=2||out.length>=4)break}
+  return real>=2?out.join(" "):null;
+}
+function buildCollections(){
+  const by={};
+  G.forEach(g=>{const k=seriesKey(g.t);if(k)(by[k]=by[k]||[]).push(g.id)});
+  const series=Object.keys(by).filter(k=>by[k].length>1)
+    .sort((a,b)=>by[b].length-by[a].length||a.localeCompare(b)).slice(0,4)
+    .map(k=>({n:k,m:g=>by[k].indexOf(g.id)>=0}));
+  return series.concat([
+    {n:"Emulated discs",m:g=>g.s==="emu"},
+    {n:"Couch co-op",m:g=>(g.meta&&g.meta.cats||[]).some(c=>/Co-op|Split/.test(c))},
+    {n:"Big installs",m:g=>g.gb>=50}
+  ]).filter(c=>G.some(c.m));
+}
+let COLLECTIONS=[];
 const fmtGB=v=>v>=1000?(v/1000).toFixed(2)+" TB":v.toFixed(1)+" GB";
 const bytes=n=>n>=1073741824?(n/1073741824).toFixed(1)+" GB":n>=1048576?(n/1048576).toFixed(0)+" MB":n>=1024?(n/1024).toFixed(0)+" KB":n+" B";
 const cov=g=>g.art&&g.art.c||null, amb=g=>g.art&&(g.art.a||g.art.c)||null, asrc=g=>g.art?SRCN[g.art.s]:null;
@@ -1140,6 +1126,9 @@ function tabBody(g,lab,cls){
 }
 function pageHome(){
   content.className="content";
+  if(!G.length){content.innerHTML='<div class="empty"><b>Welcome to GameBox</b>'+
+    'Your library is empty — run setup and pick the drives to scan.'+
+    '<div style="margin-top:.8cqw"><button class="btn2 scanopen" type="button">Run setup</button></div></div>';return}
   const played=G.filter(g=>g.played).sort((a,b)=>Date.parse(b.played)-Date.parse(a.played));
   const recent=[...G].sort((a,b)=>Date.parse(b.upd)-Date.parse(a.upd)).slice(0,10);
   const never=G.filter(g=>g.state==="new"),neverGB=never.reduce((a,b)=>a+b.gb,0);
@@ -1264,6 +1253,14 @@ function liveStats(){
   }
   const q=document.getElementById("q");
   if(q)q.placeholder="Search "+n+" games, stores or folders\u2026";
+  const gb=G.reduce((a,b)=>a+b.gb,0), el=id=>document.getElementById(id);
+  if(el("stotal"))el("stotal").textContent=n?fmtGB(gb):"--";
+  if(el("synctx"))el("synctx").textContent=n?stores+" source"+(stores===1?"":"s")+" \u00b7 "+n+" games":"No library yet";
+  if(el("stright"))el("stright").textContent=n?fmtGB(gb)+" indexed":"No library yet";
+  const bad=G.filter(g=>g.state==="err").length,w=el("stwarn");
+  if(w){w.style.display=bad?"":"none";if(bad)el("stwarntx").textContent=bad+" install folder"+(bad===1?"":"s")+" unreadable"}
+  const nb=document.querySelector("#notifbtn .cnt");
+  if(nb){const c=notices().length;nb.textContent=c;nb.style.display=c?"":"none"}
 }
 function render(){
   renderRail();renderToolbar();
@@ -1272,7 +1269,10 @@ function render(){
   else if(S.page==="artwork")pageArtwork();
   else if(S.page==="settings")pageSettings();
   else pageLibrary();
-  renderSide();liveStats();renderMe();
+  const side=document.querySelector(".side");
+  if(G.length){if(side)side.style.display="";renderSide()}
+  else if(side)side.style.display="none";
+  liveStats();renderMe();
   document.getElementById("crumb").textContent=S.page==="source"?STORES[S.store].n:S.page==="collection"?S.collection:
     ({home:"Home",library:"All games",continue:"Continue playing",installed:"Installed",never:"Never played",
       favorites:"Favorites",collections:"Collections",artwork:"Artwork",settings:"Settings"})[S.page]||"Library";
@@ -1291,7 +1291,7 @@ document.addEventListener("click",e=>{
   const ins=t.closest("[data-inspect]");if(ins){e.stopPropagation();openInspector(+ins.dataset.inspect,ins);return}
   const d=t.closest("[data-detail]");if(d){S.sel=+d.dataset.detail;S.view="details";SS("view",S.view);
     if(!["library","continue","installed","never","favorites","source","collection"].includes(S.page))S.page="library";render();return}
-  if(t.closest(".scanopen")){openScanner();return}
+  if(t.closest(".scanopen")){openSetup(1);return}
   const gp=t.closest("[data-go]");if(gp){go(gp.dataset.go);return}
   const sr=t.closest("[data-src]");if(sr){S.page="source";S.store=sr.dataset.src;S.collection=null;render();return}
   const cl=t.closest("[data-col]");if(cl){S.page="collection";S.collection=cl.dataset.col;S.store=null;render();return}
@@ -1319,7 +1319,16 @@ qi.addEventListener("input",()=>{S.q=qi.value;document.getElementById("qclr").hi
 document.getElementById("qclr").addEventListener("click",()=>{qi.value="";S.q="";render()});
 document.getElementById("inspectlink").addEventListener("click",()=>openInspector(S.sel,document.getElementById("minicase")));
 document.getElementById("minicase").addEventListener("click",()=>openInspector(S.sel,document.getElementById("minicase")));
-document.getElementById("notifbtn").addEventListener("click",()=>showToast("2 notifications: Cyberpunk 2077 patch downloading · 1 install folder unreadable"));
+function notices(){
+  const out=[],bad=G.filter(g=>g.state==="err"),gen=G.filter(g=>g.art&&g.art.s==="generated"),none=G.filter(g=>!cov(g));
+  if(bad.length)out.push(bad.length+" install folder"+(bad.length===1?"":"s")+" unreadable");
+  if(none.length)out.push(none.length+" game"+(none.length===1?"":"s")+" without a cover");
+  else if(gen.length)out.push(gen.length+" generated cover"+(gen.length===1?"":"s"));
+  return out;
+}
+document.getElementById("notifbtn").addEventListener("click",function(){
+  const n=notices();
+  showToast(n.length?n.join(" \u00b7 "):"Nothing needs attention \u2014 every game is readable and has a cover")});
 window.addEventListener("keydown",e=>{
   if(e.key==="/"&&document.activeElement!==qi){e.preventDefault();qi.focus()}
   if(e.key==="Escape"){if(document.getElementById("inspector").classList.contains("open"))closeInspector();
@@ -1588,66 +1597,13 @@ window.addEventListener("keydown",function(e){
     const api=bridge();if(api&&api.settings_set)api.settings_set({setup_done:true});closeSetup()}});
 
 /* ---------- scanner ---------- */
-const TARGETS=[{n:"Drive Z:",p:"1.82 TB · NTFS",found:35},{n:"Steam",p:"Z:\\SteamLibrary\\steamapps",found:10},
- {n:"GOG Galaxy",p:"galaxy-2.0.db · 148 releases",found:10},{n:"Epic Games",p:"ProgramData\\Epic\\…\\Manifests",found:5},
- {n:"EA App",p:"Z:\\ · EA install registry",found:3},{n:"Emulators",p:"RPCS3 · PCSX2 2.8.1 · mGBA",found:6}];
-const STEPS=[[0,"t","Scanner started — 6 targets queued"],[0,"","Mounting Z:\\ … 1.82 TB NTFS, 489 GB free"],
- [1,"","Steam library found: Z:\\SteamLibrary\\steamapps"],[1,"","appmanifest_47810.acf → Dragon Age: Origins UE · 23.7 GB"],
- [1,"ok2","10 Steam titles indexed · 473.9 GB"],[2,"","Opening GOG galaxy-2.0.db … 148 library releases"],
- [2,"ok2","10 GOG titles installed · 188.5 GB · covers found in webcache"],
- [3,"","Parsing Epic manifests … 8 entries, 3 are dev tools (skipped)"],
- [3,"ok2","5 Epic games indexed · 282.6 GB"],[4,"","EA App: Mass Effect LE, Andromeda, Dragon Age Veilguard"],
- [4,"ok2","3 EA titles indexed · 248.7 GB"],[5,"","Emulator hosts: RPCS3, PCSX2 2.8.1, mGBA"],
- [5,"ok2","6 emulated discs indexed · 23.0 GB"],
- [5,"w2","Z:\\Activision\\Spider-Man Web of Shadows — 0 B, files missing"],
- [5,"a2","Metadata: 28 titles matched · 84 screenshots cached"],
- [5,"ok2","Done — 35 games · 1.19 TB · 6.4 s"]];
-const scanner=document.getElementById("scanner"),slog=document.getElementById("scanlog"),sfill=document.getElementById("scanfill"),
-      sfound=document.getElementById("scanfound"),stg=document.getElementById("scantargets"),toast=document.getElementById("toast");
-let scanTimer=[];
-function paintTargets(active){
-  stg.innerHTML='<div class="lbl">SCAN TARGETS</div>'+TARGETS.map((t,i)=>{
-    const cls=active===null?"":i<active?"done":i===active?"busy":"";
-    return `<div class="tgt ${cls}"><span class="mk">${active!==null&&i<active?"✓":""}</span>
-      <span><span class="nm">${t.n}</span><span class="pp">${t.p}</span></span>
-      <span class="ct2">${active!==null&&i<active?t.found:"—"}</span></div>`}).join("");
-}
-function openScanner(){scanner.classList.add("open");slog.innerHTML="";sfound.innerHTML="";sfill.style.width="0";paintTargets(null);
-  document.getElementById("scansum").textContent="Ready to scan 6 targets — Steam, GOG, Epic, EA App, emulators and drive Z:.";
-  ["scantime|0.0 s","scangames|0","scansize|0 TB","scanart|0"].forEach(s=>{const[a,b]=s.split("|");document.getElementById(a).textContent=b})}
-function closeScanner(){scanner.classList.remove("open");scanTimer.forEach(clearTimeout);scanTimer=[]}
-function runScan(){
-  slog.innerHTML="";sfound.innerHTML="";scanTimer.forEach(clearTimeout);scanTimer=[];
-  const withArt=G.filter(cov);
-  STEPS.forEach((s,i)=>scanTimer.push(setTimeout(()=>{
-    const d=document.createElement("div");
-    d.innerHTML=`<span class="t">[${(i*0.4).toFixed(2)}]</span> <span class="${s[1]}">${s[2]}</span>`;
-    slog.appendChild(d);slog.scrollTop=slog.scrollHeight;paintTargets(s[0]);
-    sfill.style.width=Math.round((i+1)/STEPS.length*100)+"%";
-    document.getElementById("scantime").textContent=(i*0.4).toFixed(1)+" s";
-    document.getElementById("scangames").textContent=Math.round(35*(i+1)/STEPS.length);
-    document.getElementById("scansize").textContent=(1.19*(i+1)/STEPS.length).toFixed(2)+" TB";
-    document.getElementById("scanart").textContent=Math.round(35*(i+1)/STEPS.length);
-    const g2=withArt[(i*2)%withArt.length];
-    if(g2){const el=document.createElement("i");el.style.backgroundImage=`url(${cov(g2)})`;sfound.prepend(el);
-      while(sfound.children.length>18)sfound.lastChild.remove()}
-    if(i===STEPS.length-1){document.getElementById("scansum").innerHTML="<b>35 games</b> · 1.19 TB · 6 sources · 35 covers · 1 problem found";
-      showToast("Scan complete — 35 games, 1 install folder unreadable")}
-  },i*330)));
-}
+const toast=document.getElementById("toast");
 function showToast(t){document.getElementById("toasttx").textContent=t;toast.classList.add("show");
   clearTimeout(showToast._t);showToast._t=setTimeout(()=>toast.classList.remove("show"),4000)}
-document.getElementById("scanclose").addEventListener("click",closeScanner);
-document.getElementById("scancancel").addEventListener("click",closeScanner);
-document.getElementById("scanrun").addEventListener("click",()=>{
-  runScan();
-  const api=bridge();
-  if(api&&api.rescan)api.rescan().then(j=>{if(j&&j.msg)showToast(j.msg)}).catch(()=>{});
-});
-scanner.addEventListener("mousedown",e=>{if(e.target===scanner)closeScanner()});
 
 if(typeof window.pywebview!=="undefined")document.body.classList.add("native");
 applySettings();
-S.sel=(G.find(g=>g.played)||G[0]).id;
+COLLECTIONS=buildCollections();
+S.sel=G.length?(G.find(g=>g.played)||G[0]).id:-1;
 render();
 </script>
