@@ -250,7 +250,9 @@ class Api:
         if not roots:
             return {"ok": False, "msg": "Pick at least one drive"}
         exe = "python" if getattr(sys, "frozen", False) else sys.executable
-        cmd = [exe, script]
+        # -u: unbuffered, or the child's prints sit in a pipe buffer and the
+        # wizard shows nothing until the whole scan has finished.
+        cmd = [exe, "-u", script]
         for r in roots:
             cmd += ["--root", r]
         cmd.append("--apply")

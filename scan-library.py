@@ -112,6 +112,12 @@ SKIP_FOLDERS = {"system volume information", "$recycle.bin", "windows", "windows
 SKIP_PATTERNS = (re.compile(r"^backup[_\- ]", re.I), re.compile(r"^\$", re.I),
                  re.compile(r"^windows", re.I), re.compile(r"^python\d", re.I),
                  re.compile(r"redist|directx|vcredist|dotnet|\.net|visual c\+\+", re.I))
+# Folders that host other games rather than being one, and emulator/tool homes.
+CONTAINER_NAMES = {"steamlibrary", "steamapps", "gog galaxy", "epic games", "origin games",
+                   "ea games", "ubisoft", "battle.net", "ps3 games", "ps2", "ps1", "roms",
+                   "emulators", "emulation"}
+EMU_HOMES = re.compile(r"^(rpcs3|pcsx2|dolphin|cemu|yuzu|ryujinx|ppsspp|retroarch|mgba|"
+                       r"visualboyadvance|duckstation|xenia|citra|melonds)", re.I)
 SKIP_TITLES = {"unreal engine", "quixel bridge", "fab ue plugin", "epic online services",
                "steamworks common redistributables", "steamvr", "steam linux runtime",
                "proton", "steam controller configs", "spacewar", "half-life 2 demo"}
@@ -193,12 +199,19 @@ def scan_gog():
         cur = con.cursor()
         cur.execute("select releaseKey from LibraryReleases")
         keys = [r[0] for r in cur.fetchall()]
-        installed = set()
+        installed, paths = set(), {}
         try:
-            cur.execute("select productId from InstalledBaseProducts")
-            installed = {"gog_%s" % r[0] for r in cur.fetchall()}
+            cur.execute("select productId, installationPath from InstalledBaseProducts")
+            for pid, ipath in cur.fetchall():
+                installed.add("gog_%s" % pid)
+                if ipath:
+                    paths["gog_%s" % pid] = ipath
         except sqlite3.Error:
-            pass
+            try:
+                cur.execute("select productId from InstalledBaseProducts")
+                installed = {"gog_%s" % r[0] for r in cur.fetchall()}
+            except sqlite3.Error:
+                pass
     except sqlite3.Error:
         return []
 
@@ -219,9 +232,17 @@ def scan_gog():
             continue
         img = piece(k, 145) or piece(k, 209) or {}
         grab = lambda u: (re.search(r"/([0-9a-f]{64})_", u or "") or [None, None])[1] if isinstance(u, str) else None
-        out.append({"title": title, "store": "gog", "via": "GOG Galaxy",
-                    "cover_hash": grab(img.get("verticalCover") if isinstance(img, dict) else ""),
-                    "bg_hash": grab(img.get("background") if isinstance(img, dict) else "")})
+        entry = {"title": title, "store": "gog", "via": "GOG Galaxy",
+                 "cover_hash": grab(img.get("verticalCover") if isinstance(img, dict) else ""),
+                 "bg_hash": grab(img.get("background") if isinstance(img, dict) else "")}
+        ipath = paths.get(k)
+        if ipath and os.path.isdir(ipath):
+            entry["path"] = os.path.normpath(ipath)   # GOG records forward slashes
+            entry["bytes"] = folder_size(ipath)
+            exe = best_exe(ipath)
+            if exe:
+                entry["launch"] = ("exe", exe, ipath)
+        out.append(entry)
     return out
 
 
@@ -245,10 +266,29 @@ def scan_epic():
     return out
 
 
-def looks_like_a_game(name):
-    if name.lower() in SKIP_FOLDERS or name.startswith("."):
+TITLE_NOISE = re.compile(r"\s*\((?:usa|eu|jp|europe|japan|en|ja|fr|es|de|it|"
+                         r"en,?\s*\w+(?:,\s*\w+)*|v[\d.]+|collectors? edition|disc \d)\)", re.I)
+
+
+def pretty_title(name):
+    """Folder names are not titles: drop region/version tags and tidy separators."""
+    t = TITLE_NOISE.sub("", name)
+    t = re.sub(r"\s{2,}", " ", t).strip(" -_")
+    return t or name
+
+
+def looks_like_a_game(name, path=""):
+    low = name.lower()
+    if low in SKIP_FOLDERS or low in CONTAINER_NAMES or name.startswith("."):
         return False
-    return not any(p.search(name) for p in SKIP_PATTERNS)
+    if EMU_HOMES.match(name):
+        return False
+    if any(p.search(name) for p in SKIP_PATTERNS):
+        return False
+    # a folder that hosts a Steam library is a container, not a game
+    if path and os.path.isdir(os.path.join(path, "steamapps")):
+        return False
+    return True
 
 
 def scan_folders(root, min_gb=0.5):
@@ -260,20 +300,41 @@ def scan_folders(root, min_gb=0.5):
     out = []
     if not os.path.isdir(root):
         return out
+    entries = []
     for name in sorted(os.listdir(root)):
         p = os.path.join(root, name)
-        if not os.path.isdir(p) or not looks_like_a_game(name):
+        if not os.path.isdir(p):
+            continue
+        # "PS3 Games", "roms" and friends hold games rather than being one, so
+        # step inside and treat each child as a candidate.
+        if name.lower() in CONTAINER_NAMES and not os.path.isdir(os.path.join(p, "steamapps")):
+            try:
+                for sub in sorted(os.listdir(p)):
+                    if os.path.isdir(os.path.join(p, sub)):
+                        entries.append((sub, os.path.join(p, sub)))
+            except OSError:
+                pass
+            continue
+        entries.append((name, p))
+
+    for name, p in entries:
+        if not looks_like_a_game(name, p):
             continue
         exe = best_exe(p)
         disc = first_match(p, (".iso", ".gb", ".gbc", ".chd"))
-        if not exe and not disc:
+        web = None if (exe or disc) else (os.path.join(p, "index.html")
+                                          if os.path.exists(os.path.join(p, "index.html")) else None)
+        if not exe and not disc and not web:
             continue                      # no launchable payload: not a game
         size = folder_size(p)
-        if size < min_gb * GB and not disc:
+        if size < min_gb * GB and not disc and not web:
             continue
-        entry = {"title": name, "store": "local", "path": p, "bytes": size,
+        entry = {"title": pretty_title(name), "store": "local", "path": p, "bytes": size,
                  "updated": ts(os.path.getmtime(p)), "via": "Direct executable"}
-        if exe:
+        if web:
+            entry["launch"] = ("web", web, p)
+            entry["via"] = "Local web build"
+        elif exe:
             entry["launch"] = ("exe", exe, p)
         elif disc:
             emu = find_emulator(os.path.splitext(disc)[1].lower(), [root])
@@ -498,35 +559,47 @@ def main():
         ap.error("give at least one --root, e.g. --root C:\\Games --root D:\\")
 
     t0 = time.time()
-    print("GameBox scanner - roots: %s\n" % ", ".join(roots))
+    print("GameBox scanner - roots: %s\n" % ", ".join(roots), flush=True)
     found = []
     steam = scan_steam(roots)
-    print("  Steam       %3d titles" % len(steam))
+    print("  Steam       %3d titles" % len(steam), flush=True)
     found += steam
     gog = scan_gog()
-    print("  GOG         %3d installed" % len(gog))
+    print("  GOG         %3d installed" % len(gog), flush=True)
     found += gog
     epic = scan_epic()
-    print("  Epic        %3d titles" % len(epic))
+    print("  Epic        %3d titles" % len(epic), flush=True)
     found += epic
     for r in roots:
         f = scan_folders(r)
-        print("  %-11s %3d folders" % (r, len(f)))
+        print("  %-11s %3d folders" % (r, len(f)), flush=True)
         found += f
 
-    # merge: a store entry wins over a bare folder with the same name
+    # Merge duplicates. A store entry always wins over a bare folder, and the
+    # match is on the install path as well as the title, because a folder is
+    # frequently named nothing like the game it holds (GTAVEnhanced,
+    # MarvelRivalsjKtnW, AtomEveaCBnD).
+    def keys(g):
+        out = [("t", norm(g["title"]))]
+        p = (g.get("path") or "").replace("/", "\\").rstrip("\\").lower()
+        if p:
+            out.append(("p", p))
+        return out
+
     merged, index = [], {}
-    for g in found:
-        k = norm(g["title"])
-        if k in index:
-            cur = merged[index[k]]
-            for field in ("bytes", "path", "updated", "played", "appid", "cover_hash", "bg_hash", "launch"):
+    for g in sorted(found, key=lambda x: x["store"] == "local"):   # store entries first
+        at = next((index[k] for k in keys(g) if k in index), None)
+        if at is not None:
+            cur = merged[at]
+            for field in ("bytes", "path", "updated", "played", "appid",
+                          "cover_hash", "bg_hash", "launch", "via"):
                 if not cur.get(field) and g.get(field):
                     cur[field] = g[field]
-            if cur["store"] == "local" and g["store"] != "local":
-                cur["store"], cur["via"] = g["store"], g["via"]
+            for k in keys(cur):
+                index[k] = at
             continue
-        index[k] = len(merged)
+        for k in keys(g):
+            index[k] = len(merged)
         merged.append(dict(g))
 
     total = sum(g.get("bytes", 0) for g in merged)
@@ -571,7 +644,7 @@ def main():
                 pass
         entry["_launch"] = g.get("launch") or ("none", "")
         games.append(entry)
-        print("    %-12s %s" % (src, g["title"][:52]))
+        print("    %-12s %s" % (src, g["title"][:52]), flush=True)
 
     print("\n  artwork: " + ", ".join("%d %s" % (v, k) for k, v in sorted(counts.items())))
     write_launch(games)
