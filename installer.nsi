@@ -3,7 +3,7 @@
 Unicode true
 
 !define APP      "GameBox"
-!define VERSION  "1.2.2"
+!define VERSION  "1.2.3"
 !define PUBLISHER "GameBox contributors"
 !define WEBSITE  "https://github.com/zmaya13/gamebox"
 

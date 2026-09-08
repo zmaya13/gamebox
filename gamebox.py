@@ -28,7 +28,7 @@ import webbrowser
 import webview
 
 APP_NAME = "GameBox"
-VERSION = "1.2.2"
+VERSION = "1.2.3"
 NO_WINDOW = 0x08000000  # CREATE_NO_WINDOW
 
 # Populated by scan-library.py into launch.json next to the app.
@@ -229,6 +229,7 @@ class Api:
     def __init__(self):
         self._scan_lines = queue.Queue()
         self._scan_thread = None
+        self._scan_proc = None
 
     # ---- window
     def status(self):
@@ -260,8 +261,31 @@ class Api:
         return {"ok": True, "maximized": not maxed}
 
     def close(self):
+        """Close, and mean it - even mid-scan."""
         self.remember_window()
-        webview.windows[0].destroy()
+        self.stop_scan()
+        try:
+            webview.windows[0].destroy()
+        except Exception:
+            pass
+        # If the toolkit will not come down - a webview host still shutting
+        # down, a reader thread wedged on a pipe - do not leave the user with a
+        # window that will not close.
+        def hard_exit():
+            os._exit(0)
+
+        t = threading.Timer(2.5, hard_exit)
+        t.daemon = True
+        t.start()
+        return {"ok": True}
+
+    def stop_scan(self):
+        p, self._scan_proc = self._scan_proc, None
+        if p and p.poll() is None:
+            try:
+                p.terminate()
+            except Exception:
+                pass
         return {"ok": True}
 
     def remember_window(self):
@@ -271,25 +295,18 @@ class Api:
         return {"ok": bool(g)}
 
     def reload(self):
-        """Reopen the app so the page written by the scan is the page shown.
+        """Re-read the page the scanner has just written, in place.
 
-        load_url() on the same file:// URL hands back WebView2's cached copy,
-        so after a first scan the library still looked empty; a file:// URL
-        cannot be cache-busted with a query, because the whole string is taken
-        as the path. Starting a fresh process is the one thing that reliably
-        shows the new library.
+        location.reload() re-fetches the file, where load_url() on the same
+        file:// URL hands back WebView2's cached copy - and a file:// URL
+        cannot be cache-busted with a query, since the whole string is taken as
+        the path. So the page reloads itself; the app is never closed.
         """
         try:
-            if getattr(sys, "frozen", False):
-                cmd = [sys.executable]
-            else:
-                cmd = [sys.executable, os.path.abspath(__file__)]
-            subprocess.Popen(cmd, cwd=os.path.dirname(user_file("GameBox.html")),
-                             creationflags=NO_WINDOW | 0x00000008)  # DETACHED_PROCESS
+            webview.windows[0].evaluate_js("location.reload()")
+            return {"ok": True}
         except Exception as e:
             return {"ok": False, "msg": str(e)}
-        threading.Timer(0.4, lambda: webview.windows[0].destroy()).start()
-        return {"ok": True}
 
     # ---- settings
     def settings_get(self):
@@ -357,6 +374,13 @@ class Api:
         roots = [r for r in (roots or []) if r]
         if not roots:
             return {"ok": False, "msg": "Pick at least one drive"}
+        # a cancelled scan can leave its output, and its done marker, behind;
+        # the next scan must not read them as its own
+        while True:
+            try:
+                self._scan_lines.get_nowait()
+            except queue.Empty:
+                break
         exe = "python" if getattr(sys, "frozen", False) else sys.executable
         # -u: unbuffered, or the child's prints sit in a pipe buffer and the
         # wizard shows nothing until the whole scan has finished.
@@ -370,6 +394,7 @@ class Api:
                 p = subprocess.Popen(cmd, cwd=os.path.dirname(script), stdout=subprocess.PIPE,
                                      stderr=subprocess.STDOUT, text=True, encoding="utf-8",
                                      errors="replace", creationflags=NO_WINDOW)
+                self._scan_proc = p
                 for line in p.stdout:
                     self._scan_lines.put(line.rstrip())
                 p.wait()

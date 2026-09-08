@@ -1367,6 +1367,14 @@ function onBridgeReady(){
     }
     renderMe();
     if(j.native)document.body.classList.add("native");
+    // A page held in the browser cache can be older than the library the
+    // scanner wrote. The backend counts the launchable games, so if it has
+    // games and this page has none, re-read the page once.
+    if(j.games>0&&!G.length&&!sessionStorage.getItem("gb.refreshed")){
+      try{sessionStorage.setItem("gb.refreshed","1")}catch(e){}
+      location.reload();return;
+    }
+    if(G.length)try{sessionStorage.removeItem("gb.refreshed")}catch(e){}
     if(!j.setup_done||!G.length)setTimeout(()=>openSetup(0),350);
     document.getElementById("stsrc").textContent=j.app+" "+j.version+" \u00b7 "+j.games+" games ready to launch";
   }).catch(()=>{});return true}
@@ -1562,7 +1570,14 @@ document.getElementById("setupnext").addEventListener("click",function(){
     const api=bridge();
     if(api&&api.settings_set)api.settings_set({setup_done:true});
     closeSetup();
-    if(SU.ran&&api&&api.reload)api.reload();else{go("home");showToast("Setup complete")}
+    if(SU.ran){
+      showToast("Loading your library…");
+      // the scanner has rewritten this page; re-read it without closing the app
+      setTimeout(function(){
+        if(api&&api.reload)api.reload().catch(function(){location.reload()});
+        else location.reload();
+      },250);
+    }else{go("home");showToast("Setup complete")}
   }
 });
 document.getElementById("setupback").addEventListener("click",function(){
