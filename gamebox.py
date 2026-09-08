@@ -28,7 +28,7 @@ import webbrowser
 import webview
 
 APP_NAME = "GameBox"
-VERSION = "1.2.1"
+VERSION = "1.2.2"
 NO_WINDOW = 0x08000000  # CREATE_NO_WINDOW
 
 # Populated by scan-library.py into launch.json next to the app.

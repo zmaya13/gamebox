@@ -45,11 +45,14 @@ an Artwork manager and Settings.
 
 ## Install
 
-Download `GameBox-Setup-1.0.0.exe` from
+Download the latest `GameBox-Setup-*.exe` from
 [Releases](https://github.com/zmaya13/gamebox/releases) and run it. It installs per
 user, needs no administrator rights, and uninstalls from Add/Remove Programs.
+Upgrading over an existing install keeps the library you scanned; uninstalling
+asks whether to remove it, along with your settings and the browser profile that
+holds favourites and hidden games. Either way your games are never touched.
 
-Then scan your drives:
+Setup scans for you on first run. To scan by hand instead:
 
 ```powershell
 cd "$env:LOCALAPPDATA\Programs\GameBox"

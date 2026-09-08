@@ -3,7 +3,7 @@
 Unicode true
 
 !define APP      "GameBox"
-!define VERSION  "1.2.1"
+!define VERSION  "1.2.2"
 !define PUBLISHER "GameBox contributors"
 !define WEBSITE  "https://github.com/zmaya13/gamebox"
 
@@ -63,19 +63,47 @@ Section "GameBox" SecMain
 SectionEnd
 
 Section "Uninstall"
+  ; --- the app itself
   Delete "$INSTDIR\GameBox.exe"
-  Delete "$INSTDIR\GameBox.html"
   Delete "$INSTDIR\GameBox.blank.html"
   Delete "$INSTDIR\GameBox.ico"
   Delete "$INSTDIR\scan-library.py"
-  Delete "$INSTDIR\launch.json"
   Delete "$INSTDIR\README.md"
   Delete "$INSTDIR\LICENSE"
-  Delete "$INSTDIR\Uninstall.exe"
-  RMDir "$INSTDIR"
-  RMDir /r "$LOCALAPPDATA\GameBox"      ; WebView2 profile
   Delete "$SMPROGRAMS\GameBox.lnk"
   Delete "$DESKTOP\GameBox.lnk"
   DeleteRegKey HKCU "Software\${APP}"
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP}"
+
+  ; --- your data: the scanned library and its artwork, the launch table, your
+  ;     name and settings, and the browser profile holding favourites and
+  ;     hidden games. Removed unless you say otherwise; a silent uninstall
+  ;     removes it without asking.
+  StrCpy $0 "yes"
+  IfSilent remove_data
+  MessageBox MB_YESNO|MB_ICONQUESTION \
+    "Also remove your GameBox data?$\r$\n$\r$\nThis deletes the scanned library and its artwork, your name and settings, favourites and hidden games, and the window size GameBox remembers.$\r$\n$\r$\nYour games themselves are not touched - only what GameBox wrote about them." \
+    IDYES remove_data
+  StrCpy $0 "no"
+
+remove_data:
+  StrCmp $0 "yes" 0 keep_data
+  Delete "$INSTDIR\GameBox.html"
+  Delete "$INSTDIR\launch.json"
+  Delete "$INSTDIR\gamebox-settings.json"
+  Delete "$INSTDIR\emulators.json"
+  ; The WebView2 profile is usually still locked by the browser process that is
+  ; only now shutting down, so give it a few tries rather than leaving it.
+  StrCpy $1 0
+webview_retry:
+  RMDir /r "$LOCALAPPDATA\GameBox"
+  IfFileExists "$LOCALAPPDATA\GameBox\*.*" 0 keep_data
+  IntOp $1 $1 + 1
+  IntCmp $1 12 keep_data 0 keep_data
+  Sleep 500
+  Goto webview_retry
+
+keep_data:
+  Delete "$INSTDIR\Uninstall.exe"
+  RMDir "$INSTDIR"
 SectionEnd
