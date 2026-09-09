@@ -87,14 +87,20 @@ python gamebox.py
 ./build.ps1     # needs pyinstaller and NSIS
 ```
 
-Produces `GameBox.exe` and `GameBox-Setup-1.0.0.exe`.
+Produces `GameBox.exe` and the matching `GameBox-Setup-<version>.exe`.
 
 ## How it is put together
 
 ```
 gamebox.py         native window (pywebview + WebView2) and the launch API
 GameBox.html       the whole UI: one file, no framework, no build step
-scan-library.py    the scanner: finds games, resolves artwork, writes the library
+scan-library.py    the scanner: finds games, resolves artwork, merges the library
+library.py         the library store: stable ids, the merge, backups
+emulators.py       which emulators are installed, and how each starts a game
+stores.py          Xbox, Ubisoft, EA, Battle.net, Amazon and itch.io
+playtime.py        watches a launched game and records how long it ran
+migrate.py         one-way upgrade from the pre-1.3 in-page library
+emulation/         Playnite's emulator definitions (MIT - see its NOTICE)
 installer.nsi      NSIS installer
 ```
 
@@ -103,26 +109,161 @@ machine — launching a game, opening a folder, rescanning — is a Python call 
 pywebview bridge. There is no local web server and no listening port, and closing the
 window ends the process.
 
-The scanner writes two things: the library array inside `GameBox.html`, and
-`launch.json`, which tells the app how to start each game.
+The library lives in `library.json` beside the app, with its artwork in `art/`.
+Each game is keyed by something that does not move - a Steam appid, an Epic app
+name, a GOG product id, or a hash of its install path - so a rescan *refreshes* a
+game rather than replacing it. Anything you record about a game (favourite, tags,
+notes, completion, score, playtime) is kept in a separate part of the record that
+the scanner never touches, and a game you uninstall is marked as such rather than
+deleted, so it keeps what you wrote about it. Every scan takes a timestamped
+backup into `library-backups/` first.
+
+Before 1.3 the library was a `const G=[...]` array spliced into `GameBox.html`
+and keyed by scan order, with launch targets in a parallel `launch.json`. An
+existing install is migrated to `library.json` the first time 1.3 runs.
+
+## Stores
+
+Everything is read from what each launcher has already written to this PC — a
+registry key, a manifest, a small database. Nothing signs in or contacts a
+server, so GameBox reports the games **installed** here rather than the ones you
+own.
+
+| Store | Read from | Started with |
+|---|---|---|
+| Steam | `appmanifest_*.acf` | `steam://rungameid/<id>` |
+| GOG Galaxy | `galaxy-2.0.db` | the game's executable |
+| Epic | `.item` manifests | `com.epicgames.launcher://` |
+| Xbox / Game Pass | `XboxGames\*\Content\MicrosoftGame.config` | `shell:appsFolder\<pfn>` |
+| Ubisoft Connect | `Ubisoft\Launcher\Installs` in the registry | `uplay://launch/<id>/0` |
+| EA app | `Electronic Arts` / `EA Games` in the registry, plus `installerdata.xml` | `origin2://game/launch` |
+| Battle.net | each install's `.build.info` | `battlenet://<code>` |
+| Amazon Games | `GameInstallInfo.sqlite` | `amazon-games://play/<id>` |
+| itch.io | `butler.db` | the game's executable |
+| Folders and ROMs | walking the drives you pick | see Emulators |
+
+A packaged Xbox game will not start from its own executable — it has to go
+through the shell so Windows gives it its package identity.
+
+## Rescanning
+
+A rescan is around **ten times faster** than the first scan. Sizing every folder
+and re-fetching every cover was almost all of the runtime, and neither changes
+between two scans: a folder's size is kept with its mtime and only re-measured
+when something has touched it, and a cover already on disk is kept. Generated
+placeholder plates are always retried, in case a game can be matched properly
+now.
+
+## Making the library yours
+
+Anything you record about a game lives in `library.json` in its own section, which
+the scanner never touches — so a rescan refreshes what it found and leaves the
+rest alone, and an uninstalled game keeps everything you wrote about it.
+
+- **Completion status** — Not played, Plan to play, Playing, On hold, Beaten,
+  Completed, Abandoned. Each one in use becomes a filter chip.
+- **Tags and categories**, free-form, with the ones you already use offered so
+  they don't get retyped slightly differently. Both become sidebar rows.
+- **A score** out of 100, and **a note**.
+- **Saved views** — a search, a set of filters and a sort, kept under a name.
+- **Add a game by hand**, for anything the scanner cannot see: a shortcut, a
+  launcher link, an old install. A scan never removes it.
+- **Never import again** — remove something the scanner keeps mistaking for a
+  game, and it stays gone.
+
+Search covers your own words too: tags, categories, statuses and notes, not just
+titles and paths.
+
+## Fullscreen and a controller
+
+**F11**, the button in the title bar, or **Start** on a controller switches to
+fullscreen: the chrome goes away, the covers roughly double, and the selected
+one is outlined clearly enough to read from a sofa. It is the same page in a
+different mode rather than a second application — the layout was already sized
+in container units against the window, so it scales rather than breaking.
+
+A gamepad drives the whole library:
+
+| | |
+|---|---|
+| D-pad / left stick | move, with repeat while held |
+| **A** | play |
+| **X** | details |
+| **Y** | favourite |
+| **B** | back, then out of fullscreen |
+| **LB** / **RB** | All games · Continue · Installed · Never played · Favorites |
+| **Start** | fullscreen on and off |
+| **Back** | search |
+
+Grid navigation measures the real number of columns rather than assuming one,
+so arrow keys and the d-pad both work at any window size and in either mode.
+
+## Playtime
+
+Every game is timed, not just the ones a store keeps a record for. Launching a
+Steam or Epic game hands off to the launcher and leaves no process to wait on,
+so GameBox watches the game's **install folder** instead — anything running from
+inside it is the game. A session is recorded when it exits, with its length,
+and a game running right now shows a live badge on its tile.
+
+Sessions live in the library beside your tags and favourites, so they survive a
+rescan, and an uninstalled game keeps the hours you put into it.
+
+## Emulators
+
+GameBox reads Playnite's emulator definitions: **92 emulators, 561 profiles and
+326 ROM extensions**, vendored in `emulation/` and compiled into `emulators.json`
+at build time. Each profile carries the platforms it covers, the extensions it
+accepts, a pattern matching its executable, and — the part that matters — the
+command line to start a game with, so PCSX2-Qt gets `-fullscreen -slowboot --`
+rather than a bare path.
+
+Where a file cannot say which console it belongs to (a `.iso` is a PS2 disc or a
+PS3 disc), the folder it sits in decides; you can override that per game from
+the inspector. PlayStation 3 games are folders rather than images, and are
+recognised by shape and handed to RPCS3.
+
+Those definitions are Playnite's and are used under the MIT licence — the full
+notice is in [emulation/NOTICE](emulation/NOTICE).
+
+## Checking a build
+
+A build gets things wrong that running from source cannot: the scanner is loaded
+by path, so PyInstaller cannot see what it imports; Pillow is imported inside
+functions; the emulator definitions are packed inside the exe; and the page has
+to end up beside the artwork it references. The exe can check itself:
+
+```bash
+GameBox.exe --selftest                    # imports, definitions, page placement
+GameBox.exe --selftest --root Z:\ --apply # ...and a real scan
+GameBox.exe --uitest                      # open the window, confirm it drew the library
+```
+
+Results also go to `selftest.log` beside the exe, since a windowed build has no
+console to print to. `python tools/test_frozen.py` drives all of that against a
+built exe in throwaway folders, in the two states a real machine is in: a fresh
+install, and an upgrade from 1.2.x with the library still inside `GameBox.html`.
 
 ## Requirements
 
 - Windows 10 or 11 (the WebView2 runtime ships with Windows 11)
 - Python 3.9+ and Pillow, for the scanner
+- PyYAML, only to rebuild `emulators.json` from `emulation/`
 
 ## A note on artwork
 
 GameBox displays covers, screenshots and descriptions for games you already own. That
 material is fetched on your machine at scan time — from your own launcher caches and
 from Steam's public endpoints — and belongs to its publishers. **None of it is
-distributed with this repository**, and a scanned `GameBox.html` (which embeds your
-artwork) is deliberately git-ignored.
+distributed with this repository**, and both `library.json` and the `art/` folder
+it refers to are deliberately git-ignored.
 
 ## Known limits
 
 - Windows only.
 - The scanner matches non-Steam titles by name, so an oddly named folder can miss.
+- Stores are read locally, so GameBox lists the games **installed** on this PC,
+  not everything you own.
 - Playtime history only exists for Steam games; other stores expose no play record,
   which the UI reports as "no play record" rather than "never played".
 - Xbox / Game Pass and Ubisoft Connect are not implemented yet.

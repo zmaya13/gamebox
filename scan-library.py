@@ -8,7 +8,7 @@ and writes the result straight into the app.
 
   python scan-library.py                     scan and print a report
   python scan-library.py --json library.json write the raw scan out as JSON
-  python scan-library.py --apply             build the library into GameBox.html
+  python scan-library.py --apply             merge the scan into library.json
   python scan-library.py --root C:\\ --root D:\\Games
 
 What it reads
@@ -19,7 +19,27 @@ What it reads
               owned and installed releases, plus each game's cover hashes
   Epic        %ProgramData%\\Epic\\EpicGamesLauncher\\Data\\Manifests\\*.item
               display name, app id and launch executable
+  Xbox        <drive>\\XboxGames\\*\\Content\\MicrosoftGame.config
+  Ubisoft     HKLM\\SOFTWARE\\Ubisoft\\Launcher\\Installs
+  EA          HKLM\\SOFTWARE\\Electronic Arts, plus each install's installerdata.xml
+  Battle.net  each install's .build.info, and the uninstall entries
+  Amazon      %LOCALAPPDATA%\\Amazon Games\\...\\GameInstallInfo.sqlite
+  itch.io     %APPDATA%\\itch\\db\\butler.db
   Folders     one game per top-level folder under each --root
+  ROMs        any file a known emulator can open, and PlayStation 3 game
+              folders, which are directories rather than disc images
+
+Emulators
+---------
+  92 emulators and 561 profiles, from Playnite's definitions in emulation/
+  (MIT - see emulation/NOTICE). A profile says which platforms it covers, which
+  extensions it accepts, how to recognise its executable, and the command line
+  to start a game with - so a game is launched the way its emulator expects
+  rather than with a bare path and no arguments.
+
+  Where a file cannot say which console it is for - a .iso is a PS2 disc or a
+  PS3 disc - the folder it sits in decides, and the app can override that per
+  game.
 
 Cover art, in priority order
 ----------------------------
@@ -28,18 +48,28 @@ Cover art, in priority order
   3. Steam's public CDN     matched by title through Steam's app search
   4. Generated              a platform plate for disc images and ROMs
 
-With --apply it writes two things:
-  GameBox.html   the library array the UI renders
-  launch.json    how each game starts, which the app reads at startup
+With --apply it merges the scan into the library:
+  library.json     the library the app reads, keyed by a derived id so that a
+                   rescan refreshes a game rather than replacing it - anything
+                   you have done to a game (favourite, tags, notes, playtime)
+                   is left alone
+  art/             covers, heroes and screenshots, as files
+  library-backups/ a timestamped copy taken before every merge
+
+A game the scan no longer finds is marked not installed rather than deleted,
+so uninstalling a game does not throw away what you recorded about it.
 
 It only ever reads your games. It never moves, deletes or modifies them.
 """
 
-import argparse, base64, io, json, os, re, sqlite3, sys, time, urllib.parse, urllib.request
+import argparse, io, json, os, re, sqlite3, sys, time, urllib.parse, urllib.request
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import emulators as EMU
+import library as L
+import stores as ST
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-HTML = os.path.join(HERE, "GameBox.html")
-LAUNCH_JSON = os.path.join(HERE, "launch.json")
 STEAM_CACHE = os.path.expandvars(r"%ProgramFiles(x86)%\Steam\appcache\librarycache")
 GOG_DB = os.path.expandvars(r"%ProgramData%\GOG.com\Galaxy\storage\galaxy-2.0.db")
 GOG_CACHE = os.path.expandvars(r"%ProgramData%\GOG.com\Galaxy\webcache")
@@ -47,59 +77,51 @@ EPIC_MANIFESTS = os.path.expandvars(r"%ProgramData%\Epic\EpicGamesLauncher\Data\
 UA = {"User-Agent": "GameBox-Scanner/1.0"}
 GB = 1024 ** 3
 
-# Emulator hosts are looked up, not hardcoded: common install roots first, then
-# any folder on the drives being scanned, then PATH. Override or extend by
-# dropping an emulators.json next to this script, e.g.
-#   {".iso": ["D:\\emu\\pcsx2-qt.exe"], ".gb": ["D:\\emu\\mGBA.exe"]}
-EMU_NAMES = {".iso": ("pcsx2-qt.exe", "pcsx2.exe", "rpcs3.exe"),
-             ".chd": ("pcsx2-qt.exe", "pcsx2.exe"),
-             ".gb": ("mGBA.exe", "VisualBoyAdvance-M.exe"),
-             ".gbc": ("mGBA.exe", "VisualBoyAdvance-M.exe")}
-_emu_cache = {}
+# Which emulators are installed here. Filled in once per scan by find_emulators()
+# from the definitions in emulation/ - 92 emulators, 561 profiles, 326 ROM
+# extensions - rather than the four extensions and six executable names this
+# used to hardcode. A user emulators.json next to the app still wins.
+INSTALLED_EMULATORS = {}
 
 
-def find_emulator(ext, roots=()):
-    """First emulator that can open this kind of image, or None."""
-    if ext in _emu_cache:
-        return _emu_cache[ext]
-    override = os.path.join(HERE, "emulators.json")
-    if os.path.exists(override):
-        try:
-            hit = next((p for p in json.load(open(override, encoding="utf-8")).get(ext, [])
-                        if os.path.exists(p)), None)
-            if hit:
-                _emu_cache[ext] = hit
-                return hit
-        except Exception:
-            pass
-    names = EMU_NAMES.get(ext, ())
-    bases = [os.environ.get("ProgramFiles", ""), os.environ.get("ProgramFiles(x86)", ""),
-             os.path.expandvars(r"%LOCALAPPDATA%\Programs"), os.path.expandvars(r"%USERPROFILE%")]
-    bases += [r for r in roots if r]
-    for name in names:
-        for base in bases:
-            if not base or not os.path.isdir(base):
-                continue
-            direct = os.path.join(base, name)
-            if os.path.exists(direct):
-                _emu_cache[ext] = direct
-                return direct
+def find_emulators(roots=()):
+    """Look for installed emulators once, and remember what was found."""
+    global INSTALLED_EMULATORS
+    override = None
+    path = os.path.join(HERE, "emulators.json.user")
+    legacy = os.path.join(HERE, "emulators.json")
+    for p in (path, legacy):
+        # emulators.json is the compiled definitions now, so only treat it as a
+        # user override if it looks like the old {".iso": [...]} shape.
+        if os.path.exists(p):
             try:
-                for entry in os.scandir(base):        # one level down: <base>\<app>\<exe>
-                    if entry.is_dir():
-                        p = os.path.join(entry.path, name)
-                        if os.path.exists(p):
-                            _emu_cache[ext] = p
-                            return p
-            except OSError:
+                d = json.load(open(p, encoding="utf-8-sig"))
+                if isinstance(d, dict) and "emulators" not in d:
+                    override = d
+                    break
+            except Exception:
                 pass
-        from shutil import which
-        p = which(name)
-        if p:
-            _emu_cache[ext] = p
-            return p
-    _emu_cache[ext] = None
-    return None
+    INSTALLED_EMULATORS = EMU.find_installed(roots, override)
+    return INSTALLED_EMULATORS
+
+
+def emulator_launch(target, prefer=None):
+    """('emu', command line, working dir) for a ROM or game folder, or None."""
+    hint = platform_hint(target)
+    if os.path.isdir(target):
+        match, image = EMU.resolve_folder(target, INSTALLED_EMULATORS)
+        # A folder is matched on its shape rather than an extension, but an
+        # explicit choice still wins - the folder is what gets handed over.
+        if prefer:
+            chosen = EMU.resolve(target, INSTALLED_EMULATORS, prefer, hint)
+            if chosen:
+                match, image = chosen, (image or target)
+    else:
+        match = EMU.resolve(target, INSTALLED_EMULATORS, prefer, hint)
+        image = target
+    if not match:
+        return None
+    return ("emu", EMU.command_line(match, image), EMU.working_dir(match, image)), match
 
 
 SKIP_FOLDERS = {"system volume information", "$recycle.bin", "windows", "windows.old",
@@ -129,7 +151,47 @@ def human(n):
     return "%.1f GB" % (n / GB)
 
 
+# Sizing every folder is most of a scan's runtime, and almost nothing changes
+# between two scans. The last scan's answer is kept with the folder's mtime, so
+# an unchanged folder costs one stat instead of walking a hundred thousand
+# files. Filled in by load_size_cache() at the start of a scan.
+SIZE_CACHE = {}
+_size_hits = [0, 0]      # [reused, measured]
+
+
+def load_size_cache():
+    """Remember what the last scan measured, so a rescan can skip most of it."""
+    SIZE_CACHE.clear()
+    _size_hits[0] = _size_hits[1] = 0
+    for g in L.load().get("games", []):
+        p, size, mtime = g.get("path"), g.get("bytes"), g.get("mtime")
+        if p and size and mtime:
+            SIZE_CACHE[L.norm_path(p)] = (size, mtime)
+    return SIZE_CACHE
+
+
+def folder_mtime(path):
+    try:
+        return int(os.path.getmtime(path))
+    except OSError:
+        return 0
+
+
 def folder_size(path, budget=400_000):
+    """How much this folder holds, reusing the last scan's answer when it can.
+
+    A folder's own mtime changes when anything is added or removed directly in
+    it, which is what an install, an update or a delete does. It does not catch
+    a file quietly growing three levels down - but a size that is a few hundred
+    megabytes stale is a fair trade for a rescan that takes seconds.
+    """
+    key = L.norm_path(path)
+    mtime = folder_mtime(path)
+    cached = SIZE_CACHE.get(key)
+    if cached and mtime and cached[1] == mtime:
+        _size_hits[0] += 1
+        return cached[0]
+
     total = seen = 0
     for root, _d, files in os.walk(path):
         for f in files:
@@ -139,7 +201,11 @@ def folder_size(path, budget=400_000):
                 pass
             seen += 1
             if seen > budget:
+                _size_hits[1] += 1
+                SIZE_CACHE[key] = (total, mtime)
                 return total
+    _size_hits[1] += 1
+    SIZE_CACHE[key] = (total, mtime)
     return total
 
 
@@ -233,6 +299,7 @@ def scan_gog():
         img = piece(k, 145) or piece(k, 209) or {}
         grab = lambda u: (re.search(r"/([0-9a-f]{64})_", u or "") or [None, None])[1] if isinstance(u, str) else None
         entry = {"title": title, "store": "gog", "via": "GOG Galaxy",
+                 "product_id": k.split("_", 1)[-1],   # releaseKey is "gog_<id>"
                  "cover_hash": grab(img.get("verticalCover") if isinstance(img, dict) else ""),
                  "bg_hash": grab(img.get("background") if isinstance(img, dict) else "")}
         ipath = paths.get(k)
@@ -261,6 +328,7 @@ def scan_epic():
         if norm(name) in {norm(x) for x in SKIP_TITLES}:
             continue
         out.append({"title": name, "store": "epic", "via": "Epic launcher",
+                    "app_name": m.get("AppName", ""),
                     "path": m.get("InstallLocation", ""), "bytes": int(m.get("InstallSize") or 0),
                     "launch": ("epic", m.get("AppName", ""))})
     return out
@@ -280,6 +348,10 @@ def pretty_title(name):
 def looks_like_a_game(name, path=""):
     low = name.lower()
     if low in SKIP_FOLDERS or low in CONTAINER_NAMES or name.startswith("."):
+        return False
+    # A console folder holds a "bios" and a "saves" beside its games, and those
+    # are full of .bin files that any emulator would cheerfully be handed.
+    if NOT_A_GAME.search(name):
         return False
     if EMU_HOMES.match(name):
         return False
@@ -306,28 +378,41 @@ def scan_folders(root, min_gb=0.5):
         if not os.path.isdir(p):
             continue
         # "PS3 Games", "roms" and friends hold games rather than being one, so
-        # step inside and treat each child as a candidate.
+        # step inside and treat each child as a candidate. A ROM collection is
+        # usually one *file* per game rather than one folder, so take those too.
         if name.lower() in CONTAINER_NAMES and not os.path.isdir(os.path.join(p, "steamapps")):
             try:
                 for sub in sorted(os.listdir(p)):
-                    if os.path.isdir(os.path.join(p, sub)):
-                        entries.append((sub, os.path.join(p, sub)))
+                    full = os.path.join(p, sub)
+                    if os.path.isdir(full):
+                        entries.append((sub, full))
+                    elif os.path.splitext(sub)[1].lower().lstrip(".") in ROM_EXTS                             and not NOT_A_GAME.search(sub):
+                        entries.append((os.path.splitext(sub)[0], full))
             except OSError:
                 pass
             continue
         entries.append((name, p))
 
     for name, p in entries:
+        if not os.path.isdir(p):
+            # a loose ROM in a collection folder: the file is the game
+            out.append(rom_entry(name, p))
+            continue
         if not looks_like_a_game(name, p):
             continue
         exe = best_exe(p)
-        disc = first_match(p, (".iso", ".gb", ".gbc", ".chd"))
-        web = None if (exe or disc) else (os.path.join(p, "index.html")
-                                          if os.path.exists(os.path.join(p, "index.html")) else None)
-        if not exe and not disc and not web:
+        # An executable still wins: a PC game folder can easily hold a .bin or
+        # a .zip, and those are ROM extensions too. Only a folder with nothing
+        # to run is considered for emulation.
+        emu_target = None
+        if not exe:
+            emu_target = first_rom(p) or (p if EMU.resolve_folder(p, INSTALLED_EMULATORS)[0] else None)
+        web = None if (exe or emu_target) else (os.path.join(p, "index.html")
+                                                if os.path.exists(os.path.join(p, "index.html")) else None)
+        if not exe and not emu_target and not web:
             continue                      # no launchable payload: not a game
         size = folder_size(p)
-        if size < min_gb * GB and not disc and not web:
+        if size < min_gb * GB and not emu_target and not web:
             continue
         entry = {"title": pretty_title(name), "store": "local", "path": p, "bytes": size,
                  "updated": ts(os.path.getmtime(p)), "via": "Direct executable"}
@@ -336,23 +421,119 @@ def scan_folders(root, min_gb=0.5):
             entry["via"] = "Local web build"
         elif exe:
             entry["launch"] = ("exe", exe, p)
-        elif disc:
-            emu = find_emulator(os.path.splitext(disc)[1].lower(), [root])
-            entry["via"] = os.path.basename(emu) if emu else "Disc image"
+        elif emu_target:
+            # A ROM, or a folder an emulator opens - a PlayStation 3 game is a
+            # directory tree, not an image, which is why RPCS3 declares no
+            # extensions at all and is matched on the shape of the folder.
+            got = emulator_launch(emu_target)
             entry["store"] = "emu"
-            entry["launch"] = ("emu", emu, disc) if emu else ("none", "")
+            # Remember which file inside the folder is the game, so the app can
+            # offer the other emulators that could open it without re-scanning.
+            if os.path.isfile(emu_target):
+                entry["rom"] = emu_target
+            if got:
+                entry["launch"], match = got
+                entry["via"] = match.name
+                entry["platform"] = (match.platforms or [None])[0]
+            else:
+                entry["launch"] = ("none", "")
+                entry["via"] = "No emulator installed for " + (
+                    os.path.splitext(emu_target)[1].lstrip(".").upper() or "this game")
         out.append(entry)
     return out
 
 
-def first_match(folder, exts):
-    for root, _d, files in os.walk(folder):
-        for f in files:
-            if os.path.splitext(f)[1].lower() in exts:
-                return os.path.join(root, f)
-        if root.count(os.sep) - folder.count(os.sep) > 2:
-            break
+# Every extension any of the 92 known emulators can open - 326 of them, where
+# this used to be a hardcoded four. Loaded once; empty if the definitions were
+# not shipped, in which case nothing is treated as a ROM.
+ROM_EXTS = EMU.extensions()
+
+# Breadth has a cost. RetroArch will happily be pointed at a .exe, .bat or .dll,
+# DuckStation at a .exe, Kega Fusion at a .md - which is also every README ever
+# written. Left alone, a README.md inside a web build made it a Mega Drive game.
+# These extensions are only treated as ROMs when the file sits directly in a
+# folder that exists to hold ROMs, where the intent is not in doubt.
+AMBIGUOUS_EXTS = {"md", "bin", "exe", "bat", "cmd", "com", "dll", "app", "dat",
+                  "cfg", "xml", "img", "gz", "tar", "rar", "txt", "log", "ini"}
+SCAN_ROM_EXTS = ROM_EXTS - AMBIGUOUS_EXTS
+
+# A ROM collection is usually sorted by console, and the folder name is the only
+# thing that says which - an .iso is a PS2 disc or a PS3 disc depending entirely
+# on where it lives. RPCS3 declares no extensions at all, so without this hint a
+# PS3 image is handed to PCSX2, which cannot boot it.
+PLATFORM_HINTS = (
+    (re.compile(r"\bps3\b|playstation ?3", re.I), "sony_playstation3"),
+    (re.compile(r"\bps2\b|playstation ?2", re.I), "sony_playstation2"),
+    (re.compile(r"\bps1\b|\bpsx\b|playstation ?1", re.I), "sony_playstation"),
+    (re.compile(r"\bpsp\b", re.I), "sony_psp"),
+    (re.compile(r"gamecube|\bngc\b", re.I), "nintendo_gamecube"),
+    (re.compile(r"\bwii ?u\b", re.I), "nintendo_wiiu"),
+    (re.compile(r"\bwii\b", re.I), "nintendo_wii"),
+    (re.compile(r"\bnds\b|nintendo ?ds", re.I), "nintendo_ds"),
+    (re.compile(r"\b3ds\b", re.I), "nintendo_3ds"),
+    (re.compile(r"\bn64\b|nintendo ?64", re.I), "nintendo_64"),
+    (re.compile(r"\bsnes\b|super ?nintendo", re.I), "nintendo_super_nes"),
+    (re.compile(r"\bnes\b|famicom", re.I), "nintendo_nes"),
+    (re.compile(r"\bgba\b|game ?boy ?advance", re.I), "nintendo_gameboyadvance"),
+    (re.compile(r"\bgbc\b|game ?boy ?color", re.I), "nintendo_gameboycolor"),
+    (re.compile(r"game ?boy", re.I), "nintendo_gameboy"),
+    (re.compile(r"dreamcast", re.I), "sega_dreamcast"),
+    (re.compile(r"saturn", re.I), "sega_saturn"),
+    (re.compile(r"mega ?drive|genesis", re.I), "sega_genesis"),
+    (re.compile(r"xbox ?360", re.I), "microsoft_xbox360"),
+)
+# Folders inside a console's directory that hold system files, not games.
+NOT_A_GAME = re.compile(r"\b(bios|firmware|saves?|savestates?|memcards?|"
+                        r"screenshots?|cheats?|shaders?|covers?|themes?)\b", re.I)
+
+
+def platform_hint(path):
+    """The console a path implies, from the folder names above it."""
+    for part in reversed(os.path.normpath(path).split(os.sep)):
+        for rx, pid in PLATFORM_HINTS:
+            if rx.search(part):
+                return pid
     return None
+
+# A multi-disc game names its discs in an .m3u; the playlist is the game, and
+# the discs beside it are not three more games.
+PLAYLIST_EXTS = ("m3u", "m3u8")
+
+
+def first_rom(folder, depth=2):
+    """The ROM in a folder, preferring a playlist over the discs it lists."""
+    best = None
+    for root, _d, files in os.walk(folder):
+        for f in sorted(files):
+            ext = os.path.splitext(f)[1].lower().lstrip(".")
+            if ext in PLAYLIST_EXTS:
+                return os.path.join(root, f)      # a playlist settles it
+            if ext in SCAN_ROM_EXTS and best is None:
+                best = os.path.join(root, f)
+        if root.count(os.sep) - folder.count(os.sep) > depth:
+            break
+    return best
+
+
+def rom_entry(name, path):
+    """A loose ROM file in a collection folder is one game."""
+    try:
+        size = os.path.getsize(path)
+    except OSError:
+        size = 0
+    entry = {"title": pretty_title(name), "store": "emu", "path": os.path.dirname(path),
+             "rom": path, "bytes": size, "updated": ts(os.path.getmtime(path))
+             if os.path.exists(path) else None}
+    got = emulator_launch(path)
+    if got:
+        entry["launch"], match = got
+        entry["via"] = match.name
+        entry["platform"] = (match.platforms or [None])[0]
+    else:
+        entry["launch"] = ("none", "")
+        entry["via"] = "No emulator installed for " + (
+            os.path.splitext(path)[1].lstrip(".").upper() or "this file")
+    return entry
 
 
 BAD_EXE = re.compile(r"unins|crash|redist|vcredist|setup|touchup|updater|helper|dxsetup|"
@@ -378,12 +559,20 @@ def best_exe(folder):
 
 
 # ----------------------------------------------------------------- artwork
-def enc(im, w, h, q):
+def enc(im, w, h, q, stem):
+    """Resize, encode, and write into art/. Returns the path the page uses.
+
+    Artwork used to be inlined as base64 data: URIs, which is what made a
+    scanned page 3.7 MB and slow enough to parse that the app could miss its
+    own bridge-ready event. Files load lazily and cost the library nothing.
+    """
     from PIL import Image
     im = im.convert("RGB").resize((w, h), Image.LANCZOS)
-    b = io.BytesIO()
-    im.save(b, "JPEG", quality=q, optimize=True, progressive=True)
-    return "data:image/jpeg;base64," + base64.b64encode(b.getvalue()).decode()
+    os.makedirs(L.art_dir(), exist_ok=True)
+    name = stem + ".jpg"
+    im.save(os.path.join(L.art_dir(), name), "JPEG",
+            quality=q, optimize=True, progressive=True)
+    return "art/" + name
 
 
 def steam_appid(title):
@@ -403,7 +592,7 @@ def steam_appid(title):
     return best[1] if best and best[0] else None
 
 
-def store_meta(appid):
+def store_meta(appid, stem="meta"):
     d = get("https://store.steampowered.com/api/appdetails?appids=%s&l=english" % appid)
     if not d:
         return None
@@ -428,12 +617,13 @@ def store_meta(appid):
             "cats": [c["description"] for c in a.get("categories", []) if c["description"] in keep][:6],
             "os": (m.group(1)[:40].strip(" *:") if m else "Windows"), "shots": []}
     from PIL import Image
-    for sc in (a.get("screenshots") or [])[:3]:
+    for i, sc in enumerate((a.get("screenshots") or [])[:3]):
         raw = get(sc.get("path_thumbnail") or sc.get("path_full"), 20)
         if raw:
             try:
                 im = Image.open(io.BytesIO(raw))
-                meta["shots"].append(enc(im, 340, int(im.height * 340 / im.width), 68))
+                meta["shots"].append(enc(im, 340, int(im.height * 340 / im.width), 68,
+                                         stem + "-s%d" % i))
             except Exception:
                 pass
     return meta
@@ -484,8 +674,8 @@ def generated_plate(title, platform=""):
     return im
 
 
-def artwork(game, gog_index, want_meta=True):
-    """-> (cover, ambient, source, meta|None)"""
+def artwork(game, gog_index, stem, want_meta=True):
+    """-> (cover, ambient, source, meta|None), written into art/ as <stem>*.jpg"""
     from PIL import Image
     appid = game.get("appid")
     if appid:
@@ -493,56 +683,80 @@ def artwork(game, gog_index, want_meta=True):
         cov = os.path.join(d, "library_600x900.jpg")
         if os.path.exists(cov):
             hero = os.path.join(d, "library_hero.jpg")
-            return (enc(Image.open(cov), 300, 450, 80),
-                    enc(Image.open(hero), 640, 300, 70) if os.path.exists(hero) else None,
-                    "steam-cache", store_meta(appid) if want_meta else None)
+            return (enc(Image.open(cov), 300, 450, 80, stem),
+                    enc(Image.open(hero), 640, 300, 70, stem + "-h") if os.path.exists(hero) else None,
+                    "steam-cache", store_meta(appid, stem) if want_meta else None)
     if game.get("cover_hash"):
         fc = gog_index.get(game["cover_hash"] + "_glx_vertical_cover.webp")
         if fc:
             fb = gog_index.get((game.get("bg_hash") or "") + "_glx_bg_top_padding_7.webp")
             aid = appid or steam_appid(game["title"])
-            return (enc(Image.open(fc), 300, 450, 80),
-                    enc(Image.open(fb), 640, 300, 70) if fb else None,
-                    "gog-cache", store_meta(aid) if (aid and want_meta) else None)
+            return (enc(Image.open(fc), 300, 450, 80, stem),
+                    enc(Image.open(fb), 640, 300, 70, stem + "-h") if fb else None,
+                    "gog-cache", store_meta(aid, stem) if (aid and want_meta) else None)
     aid = appid or steam_appid(game["title"])
     if aid:
         raw = get("https://cdn.akamai.steamstatic.com/steam/apps/%s/library_600x900.jpg" % aid)
         if raw:
             hero = get("https://cdn.akamai.steamstatic.com/steam/apps/%s/library_hero.jpg" % aid)
-            return (enc(Image.open(io.BytesIO(raw)), 300, 450, 80),
-                    enc(Image.open(io.BytesIO(hero)), 640, 300, 70) if hero else None,
-                    "steam-cdn", store_meta(aid) if want_meta else None)
+            return (enc(Image.open(io.BytesIO(raw)), 300, 450, 80, stem),
+                    enc(Image.open(io.BytesIO(hero)), 640, 300, 70, stem + "-h") if hero else None,
+                    "steam-cdn", store_meta(aid, stem) if want_meta else None)
     plat = "PS3" if "ps3" in (game.get("path") or "").lower() else \
            "PS2" if re.search(r"\(usa\)|\(eu\)|iso", game.get("path") or "", re.I) else ""
     im = generated_plate(game["title"], plat)
-    return (enc(im, 300, 450, 80), enc(im, 640, 300, 70), "generated", None)
+    return (enc(im, 300, 450, 80, stem), enc(im, 640, 300, 70, stem + "-h"),
+            "generated", None)
+
+
+# ---------------------------------------------------------------------- ids
+def stable_id(g):
+    """The id a game keeps across rescans.
+
+    Prefer the store's own key - an appid, an Epic AppName, a GOG product id -
+    because that is the one thing about a game that does not move. A folder
+    game has no such key, so it falls back to its install path.
+    """
+    store = g.get("store")
+    if store == "steam" and g.get("appid"):
+        return L.game_id("steam", g["appid"])
+    if store == "epic" and g.get("app_name"):
+        return L.game_id("epic", g["app_name"])
+    if store == "gog" and g.get("product_id"):
+        return L.game_id("gog", g["product_id"])
+    key = ST.ID_KEYS.get(store)
+    if key and g.get(key):
+        return L.game_id(store, g[key])
+    if g.get("path"):
+        return L.game_id(store or "local", path=g["path"])
+    return L.game_id(store or "local",
+                     key="title-" + norm(g.get("title", "")))
 
 
 # ------------------------------------------------------------------- write
-def apply_to_html(games, target=None):
-    path = target or HTML
-    if not os.path.exists(path):
-        print("! %s not found" % path)
+def apply_to_library(games, prune=True):
+    """Fold the scan into library.json, keeping everything the user owns.
+
+    This used to splice a `const G=[...]` array into GameBox.html with a regex
+    and write a parallel launch.json, both keyed by scan order - so a rescan
+    renumbered every game and threw away anything the user had done. Now the
+    scan is merged into a library keyed by a derived id, and the page is code
+    again.
+    """
+    L.backup("scan")
+    data, added, updated, missing, rekeyed = L.merge(games, data=L.load(), prune=prune)
+    if not L.save(data):
+        print("! could not write library.json")
         return False
-    src = open(path, encoding="utf-8").read()
-    payload = json.dumps(games, separators=(",", ":"), ensure_ascii=False)
-    block = "const G=" + payload + ";\nconst STORES"
-    # Replace with a lambda: re.sub processes escapes in a string replacement,
-    # which would eat the backslashes out of every Windows path.
-    new, n = re.subn(r"const G=.*?;\nconst STORES", lambda _m: block, src, count=1, flags=re.S)
-    if not n:
-        print("! could not find the library block in %s" % os.path.basename(path))
-        return False
-    open(path, "w", encoding="utf-8").write(new)
-    print("+ %s updated - %d games, %.2f MB" % (os.path.basename(path), len(games),
-                                                os.path.getsize(path) / 1e6))
+    bits = ["%d new" % added, "%d updated" % updated]
+    if rekeyed:
+        bits.append("%d re-keyed" % rekeyed)
+    if missing:
+        bits.append("%d no longer installed" % missing)
+    print("+ library.json - %d games (%s), %.0f KB"
+          % (len(data["games"]), ", ".join(bits),
+             os.path.getsize(L.library_file()) / 1e3))
     return True
-
-
-def write_launch(games):
-    table = {str(g["id"]): list(g["_launch"]) for g in games if g.get("_launch")}
-    json.dump(table, open(LAUNCH_JSON, "w", encoding="utf-8"), indent=1)
-    print("+ launch.json written - %d launch targets" % len(table))
 
 
 # -------------------------------------------------------------------- main
@@ -550,16 +764,33 @@ def main():
     ap = argparse.ArgumentParser(description="Scan this PC for installed games.")
     ap.add_argument("--root", action="append", default=[], help="drive or folder to scan (repeatable)")
     ap.add_argument("--json", metavar="FILE", help="write the raw scan as JSON")
-    ap.add_argument("--apply", nargs="?", const=True, metavar="HTML",
-                    help="write the library into GameBox.html (or the file you name)")
+    ap.add_argument("--apply", action="store_true",
+                    help="merge the scan into library.json and write art/")
     ap.add_argument("--no-meta", action="store_true", help="covers only, skip store metadata")
     a = ap.parse_args()
     roots = a.root or [r for r in (os.environ.get("GAMEBOX_ROOT", "").split(";")) if r]
     if not roots:
         ap.error("give at least one --root, e.g. --root C:\\Games --root D:\\")
+    return run_scan(roots, apply=a.apply, json_out=a.json, no_meta=a.no_meta)
+
+
+def run_scan(roots, apply=False, json_out=None, no_meta=False, should_stop=None):
+    """Scan the given roots. The app calls this directly, on a thread.
+
+    should_stop  a callable checked between games, so a cancelled scan stops
+                 without leaving the library half-merged
+    """
+    class a:                       # what the body below still reads
+        pass
+    a.json, a.apply, a.no_meta = json_out, apply, no_meta
+    stop = should_stop or (lambda: False)
 
     t0 = time.time()
     print("GameBox scanner - roots: %s\n" % ", ".join(roots), flush=True)
+    inst = find_emulators(roots)
+    if inst:
+        names = sorted(EMU.emulator(e)["name"] for e in inst)
+        print("  emulators   %3d installed - %s" % (len(inst), ", ".join(names)[:70]), flush=True)
     found = []
     steam = scan_steam(roots)
     print("  Steam       %3d titles" % len(steam), flush=True)
@@ -570,6 +801,16 @@ def main():
     epic = scan_epic()
     print("  Epic        %3d titles" % len(epic), flush=True)
     found += epic
+    for label, _key, fn in ST.SCANNERS:
+        try:
+            got = fn(roots)
+        except Exception as e:
+            print("  %-11s failed: %s" % (label, e), flush=True)
+            continue
+        if got:
+            print("  %-11s %3d installed" % (label, len(got)), flush=True)
+            found += got
+
     for r in roots:
         f = scan_folders(r)
         print("  %-11s %3d folders" % (r, len(f)), flush=True)
@@ -592,6 +833,9 @@ def main():
         if at is not None:
             cur = merged[at]
             for field in ("bytes", "path", "updated", "played", "appid",
+                          "app_name", "product_id", "rom", "platform",
+                          "xbox_pfn", "ubi_id", "ea_id", "bnet_code",
+                          "amazon_id", "itch_id",
                           "cover_hash", "bg_hash", "launch", "via"):
                 if not cur.get(field) and g.get(field):
                     cur[field] = g[field]
@@ -604,6 +848,8 @@ def main():
 
     total = sum(g.get("bytes", 0) for g in merged)
     print("\n  %d games - %s - %.1f s" % (len(merged), human(total), time.time() - t0))
+    if _size_hits[0]:
+        print("  %d folder sizes reused from the last scan, %d measured" % tuple(_size_hits))
     for g in merged:
         if g.get("bytes", 1) == 0:
             print("  ! %s: install folder is empty" % g["title"])
@@ -613,23 +859,52 @@ def main():
         print("+ wrote %s" % a.json)
 
     if not a.apply:
-        return
+        return 0
 
     gog_index = {}
     for root, _d, fs in os.walk(GOG_CACHE):
         for f in fs:
             gog_index.setdefault(f, os.path.join(root, f))
 
-    games, counts = [], {}
-    for i, g in enumerate(merged):
-        cover, ambient, src, meta = artwork(g, gog_index, want_meta=not a.no_meta)
+    # What the last scan already resolved. Reaching Steam's CDN and its store
+    # API for every game is most of a rescan's runtime, and a cover already on
+    # disk is the same cover.
+    have_art, have_meta = {}, {}
+    for pg in L.load().get("games", []):
+        art = pg.get("art") or {}
+        cov = art.get("c")
+        if cov and os.path.exists(os.path.join(L.app_dir(), cov.replace("/", os.sep))):
+            have_art[pg["id"]] = art
+            have_meta[pg["id"]] = pg.get("meta")
+    games, counts, stopped, reused = [], {}, False, 0
+    for g in merged:
+        if stop():
+            print("\n  stopped - merging the %d games resolved so far" % len(games))
+            stopped = True
+            break
+        gid = stable_id(g)
+        stem = L.art_name(gid)
+        # A cover the last scan already resolved is kept, unless it is one of
+        # the generated plates - those are worth another try, in case the game
+        # can be matched properly now.
+        keep = have_art.get(gid)
+        if keep and keep.get("s") not in (None, "", "none", "generated"):
+            cover, ambient, src = keep.get("c"), keep.get("a"), keep.get("s")
+            meta = have_meta.get(gid)
+            reused += 1
+        else:
+            cover, ambient, src, meta = artwork(g, gog_index, stem, want_meta=not a.no_meta)
         counts[src] = counts.get(src, 0) + 1
-        gb = round(g.get("bytes", 0) / GB, 1)
-        entry = {"id": i, "t": g["title"], "short": g["title"][:34], "s": g["store"], "gb": gb,
-                 "upd": g.get("updated") or "-", "played": g.get("played"),
-                 "state": "err" if gb == 0 else ("new" if (g["store"] == "steam" and not g.get("played")) else ""),
-                 "rate": "PC", "path": g.get("path", ""), "via": g.get("via", ""),
-                 "note": "", "art": {"c": cover, "s": src}}
+        by = g.get("bytes", 0)
+        entry = {"id": gid, "title": g["title"], "store": g["store"], "bytes": by,
+                 "installed": True,
+                 "updated": g.get("updated"), "played": g.get("played"),
+                 "state": "err" if by == 0 else
+                          ("new" if (g["store"] == "steam" and not g.get("played")) else ""),
+                 "path": g.get("path", ""), "via": g.get("via", ""),
+                 "rom": g.get("rom"), "platform": g.get("platform"),
+                 "launch": list(g.get("launch") or ("none", "")),
+                 "art": {"c": cover, "s": src}}
         if ambient:
             entry["art"]["a"] = ambient
         if meta:
@@ -642,15 +917,15 @@ def main():
                                   for e in sorted(os.scandir(p), key=lambda e: (not e.is_dir(), e.name))[:10]]
             except OSError:
                 pass
-        entry["_launch"] = g.get("launch") or ("none", "")
         games.append(entry)
         print("    %-12s %s" % (src, g["title"][:52]), flush=True)
 
-    print("\n  artwork: " + ", ".join("%d %s" % (v, k) for k, v in sorted(counts.items())))
-    write_launch(games)
-    for g in games:
-        g.pop("_launch", None)
-    apply_to_html(games, None if a.apply is True else a.apply)
+    print("\n  artwork: " + ", ".join("%d %s" % (v, k) for k, v in sorted(counts.items()))
+          + (" (%d kept from the last scan)" % reused if reused else ""))
+    # A cancelled scan has only seen part of the machine, so it is in no
+    # position to declare the rest of the library uninstalled.
+    apply_to_library(games, prune=not stopped)
+    return 0
 
 
 if __name__ == "__main__":

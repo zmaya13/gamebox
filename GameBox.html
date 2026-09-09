@@ -9,6 +9,7 @@
   --acc:#ff7a1a; --acc2:#ffb648; --accsoft:rgba(255,122,26,.18);
   --ok:#57d68d; --info:#5cb0ff; --warn:#ffb648; --bad:#ff6b6b;
   --steam:#66b5ef; --gog:#b47ae6; --epic:#e2e8f2; --ea:#ff7a6a; --emu:#57d68d; --local:#f5b055;
+  --xbox:#7ddb6a; --ubisoft:#5ec8ff; --bnet:#8fa4ff; --amazon:#ffb648; --itch:#ff6b8a;
   --g1:rgba(255,255,255,.055); --g2:rgba(255,255,255,.085);
   --gs:rgba(10,13,19,.55); --gs2:rgba(10,13,19,.74);
   --edge:rgba(255,255,255,.10); --edge2:rgba(255,255,255,.055);
@@ -135,6 +136,20 @@ body{margin:0;background:#06070b;color:var(--tx);font-family:var(--body);-webkit
   white-space:nowrap;display:flex;align-items:center;gap:.25cqw}
 .chip:hover{background:var(--g2);color:var(--tx)}
 .chip.on{background:linear-gradient(120deg,rgba(255,122,26,.35),rgba(255,182,72,.14));border-color:rgba(255,182,72,.5);color:#fff;box-shadow:var(--hi)}
+/* saved views sit after a divider, so they read as yours rather than built in */
+.chipsep{width:1px;align-self:stretch;margin:.1cqw .2cqw;background:var(--edge)}
+.chip.preset{border-style:dashed}
+.chip.preset.on{border-style:solid}
+.chip.preset b{color:var(--tx3);font-weight:700;margin-left:.1cqw}
+.chip.preset b:hover{color:var(--bad,#ff6b6b)}
+.chip.save{color:var(--tx3);border-style:dashed}
+.chip.save:hover{color:var(--tx);border-color:var(--acc)}
+.addgame{display:flex;gap:.3cqw;margin-top:.4cqw;align-items:center;flex-wrap:wrap}
+.addgame input{background:rgba(255,255,255,.03);border:1px solid var(--ln);border-radius:.22cqw;
+  padding:.26cqw .42cqw;color:var(--tx);font-family:var(--body);font-size:.62cqw}
+.addgame input:first-child{width:9cqw}
+.addgame input:nth-child(2){flex:1;min-width:14cqw;font-family:var(--mono);font-size:.56cqw}
+.addgame input:focus{outline:none;border-color:var(--acc)}
 .chip .n{font-family:var(--mono);font-size:.55cqw;color:var(--tx3)}
 .chip.on .n{color:#ffe0b8}
 .chips .count{margin-left:auto;font-family:var(--mono);font-size:.55cqw;color:var(--tx3);white-space:nowrap}
@@ -203,6 +218,42 @@ body{margin:0;background:#06070b;color:var(--tx);font-family:var(--body);-webkit
   border-top:1px solid var(--edge2);background:rgba(10,13,19,.5);backdrop-filter:blur(.8cqw)}
 .tfoot .sz{margin-left:auto;color:var(--tx2);font-variant-numeric:tabular-nums}
 .tfoot .fav{color:var(--acc2)}
+/* ---------- fullscreen: the same page, across the room ----------
+   Everything you would click goes away, the covers roughly double, and the
+   selected one is marked clearly enough to see from a sofa. The layout is
+   already sized in container units, so this is mostly a matter of hiding
+   things and turning one number up. */
+body.fs .tbar,body.fs .rail,body.fs .side,body.fs .cap,body.fs #toolbar .count{display:none!important}
+body.fs .shell{grid-template-columns:1fr!important}
+body.fs .win{border-radius:0;border:0}
+body.fs #content{padding:1.6cqw 2.2cqw 2.4cqw}
+body.fs .grid{grid-template-columns:repeat(auto-fill,minmax(13cqw,1fr))!important;gap:1.1cqw}
+body.fs .tile{border-radius:.5cqw}
+body.fs .tile .tfoot{font-size:.85cqw;padding:.4cqw .55cqw}
+body.fs .tile.sel{outline:.22cqw solid var(--acc);outline-offset:.18cqw;
+  box-shadow:0 0 2.4cqw rgba(255,122,26,.5);transform:translateY(-.35cqw) scale(1.03);z-index:3}
+body.fs .hero h1,body.fs .hero .htitle{font-size:2.6cqw}
+body.fs #toolbar{padding:.5cqw 2.2cqw;gap:.5cqw}
+body.fs .chip{font-size:.85cqw;padding:.3cqw .8cqw}
+body.fs .chip.save,body.fs .chip.preset b{display:none}
+body.fs .nowplaying{font-size:.7cqw;padding:.2cqw .55cqw}
+/* the controller legend, which replaces a mouse */
+body.fs #padhelp{display:flex}
+#padhelp{display:none;position:fixed;left:0;right:0;bottom:0;z-index:60;
+  gap:1.4cqw;align-items:center;justify-content:center;pointer-events:none;
+  padding:.6cqw;background:linear-gradient(to top,rgba(6,7,11,.92),transparent);
+  font-family:var(--mono);font-size:.62cqw;color:var(--tx2)}
+#padhelp b{display:inline-flex;align-items:center;justify-content:center;
+  width:1.15cqw;height:1.15cqw;border-radius:50%;margin-right:.3cqw;
+  background:var(--g2);border:1px solid var(--edge);color:var(--tx);font-size:.55cqw}
+#padhelp .a b{background:#57d68d;color:#06070B;border-color:#57d68d}
+#padhelp .b b{background:#ff6b6b;color:#06070B;border-color:#ff6b6b}
+#padhelp .x b{background:#66b5ef;color:#06070B;border-color:#66b5ef}
+#padhelp .y b{background:#ffb648;color:#06070B;border-color:#ffb648}
+
+.nowplaying{position:absolute;left:.35cqw;top:.35cqw;z-index:4;pointer-events:none;
+  font-family:var(--mono);font-size:.5cqw;letter-spacing:.04em;color:#06070B;
+  background:var(--ok,#48d18a);border-radius:.9cqw;padding:.14cqw .4cqw;font-weight:700}
 .tacts{position:absolute;inset:auto .3cqw .3cqw .3cqw;z-index:3;display:flex;gap:.25cqw;opacity:0;transform:translateY(.2cqw);transition:.14s}
 .tile:hover .tacts{opacity:1;transform:none}
 .tacts button{all:unset;cursor:pointer;font-family:var(--mono);font-size:.46cqw;color:#fff;background:rgba(10,13,19,.68);backdrop-filter:blur(.6cqw);
@@ -413,6 +464,44 @@ tr:hover .rowplay,tr.sel .rowplay{opacity:1}
 .inpanel .facts .v{font-family:var(--disp);font-size:.82cqw;font-weight:600;font-variant-numeric:tabular-nums}
 .inpanel .p{font-family:var(--mono);font-size:.55cqw;color:var(--tx3);white-space:nowrap;overflow-x:auto}
 .inhint{font-family:var(--mono);font-size:.55cqw;color:var(--tx3);display:flex;gap:.5cqw;align-items:center;flex-wrap:wrap}
+.emupick{margin:.7cqw 0 .5cqw}
+.emupick .k{font-family:var(--mono);font-size:.5cqw;letter-spacing:.08em;color:var(--tx3);margin-bottom:.3cqw}
+.emurow{display:flex;gap:.3cqw;flex-wrap:wrap}
+.emubtn{display:flex;flex-direction:column;align-items:flex-start;gap:.08cqw;cursor:pointer;
+  padding:.28cqw .5cqw;border-radius:.22cqw;border:1px solid var(--ln);background:rgba(255,255,255,.03);
+  color:var(--tx2);font-family:var(--body);font-size:.62cqw;font-weight:600;text-align:left}
+.emubtn:hover{border-color:var(--acc);color:var(--tx)}
+.emubtn.on{border-color:var(--acc);background:rgba(255,122,26,.12);color:var(--tx)}
+.emubtn small{font-family:var(--mono);font-size:.48cqw;font-weight:400;color:var(--tx3)}
+.emunote{font-family:var(--mono);font-size:.5cqw;color:var(--tx3);margin-top:.3cqw}
+/* where a game becomes yours: status, score, tags, categories, a note */
+.organise{margin:.6cqw 0 .5cqw;display:flex;flex-direction:column;gap:.55cqw}
+.organise .k{font-family:var(--mono);font-size:.5cqw;letter-spacing:.08em;color:var(--tx3);margin-bottom:.28cqw}
+.organise .oscore{color:var(--acc);font-weight:700}
+.osel{display:flex;gap:.22cqw;flex-wrap:wrap}
+.obtn{cursor:pointer;padding:.24cqw .45cqw;border-radius:.9cqw;border:1px solid var(--ln);
+  background:rgba(255,255,255,.03);color:var(--tx2);font-family:var(--body);font-size:.58cqw;font-weight:600}
+.obtn:hover{border-color:var(--acc);color:var(--tx)}
+.obtn.on{border-color:var(--acc);background:var(--acc);color:#06070B}
+.oscoreinput{width:100%;accent-color:var(--acc);cursor:pointer;vertical-align:middle}
+.oclear{cursor:pointer;background:none;border:0;color:var(--tx3);font-family:var(--mono);
+  font-size:.5cqw;text-decoration:underline;padding:.1cqw 0}
+.ochips{display:flex;gap:.22cqw;flex-wrap:wrap;align-items:center}
+.ochip{display:inline-flex;align-items:center;gap:.22cqw;padding:.2cqw .42cqw;border-radius:.9cqw;
+  background:rgba(255,122,26,.14);border:1px solid rgba(255,122,26,.4);color:var(--tx);
+  font-family:var(--body);font-size:.58cqw;font-weight:600}
+.ochip b{cursor:pointer;color:var(--tx3);font-weight:700}
+.ochip b:hover{color:var(--bad,#ff6b6b)}
+.otag{min-width:5cqw;flex:1;background:rgba(255,255,255,.03);border:1px dashed var(--ln);
+  border-radius:.9cqw;padding:.2cqw .42cqw;color:var(--tx);font-family:var(--body);font-size:.58cqw}
+.otag:focus{outline:none;border-color:var(--acc);border-style:solid}
+.osugg{display:flex;gap:.2cqw;flex-wrap:wrap;margin-top:.25cqw}
+.osug{cursor:pointer;background:none;border:1px solid var(--ln);border-radius:.9cqw;
+  padding:.14cqw .38cqw;color:var(--tx3);font-family:var(--body);font-size:.54cqw}
+.osug:hover{border-color:var(--acc);color:var(--tx)}
+.onote{width:100%;resize:vertical;background:rgba(255,255,255,.03);border:1px solid var(--ln);
+  border-radius:.22cqw;padding:.3cqw .4cqw;color:var(--tx);font-family:var(--body);font-size:.6cqw}
+.onote:focus{outline:none;border-color:var(--acc)}
 .inclose{position:absolute;top:1cqw;right:1cqw;width:1.9cqw;height:1.9cqw;border-radius:50%;border:1px solid var(--edge);background:var(--g2);
   color:var(--tx2);display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(.8cqw)}
 .inclose svg{width:.85cqw;height:.85cqw;stroke:currentColor;fill:none;stroke-width:1.8}
@@ -644,6 +733,7 @@ body.native .tbar .logo{cursor:default}
     <div class="crumbs">Library <span>/</span> <b id="crumb">Home</b></div>
     <div class="syncpill scanopen"><i></i><span id="synctx">No library yet</span></div>
     <div class="wbtns">
+      <button type="button" id="wfs" aria-label="Fullscreen" title="Fullscreen (F11) — big picture, controller friendly"><svg viewBox="0 0 12 12"><path d="M1.5 4.2V1.5h2.7M10.5 4.2V1.5H7.8M1.5 7.8v2.7h2.7M10.5 7.8v2.7H7.8"/></svg></button>
       <button type="button" id="wmin" aria-label="Minimize"><svg viewBox="0 0 12 12"><path d="M1.5 6h9"/></svg></button>
       <button type="button" id="wmax" aria-label="Maximize"><svg viewBox="0 0 12 12"><rect x="1.7" y="1.7" width="8.6" height="8.6" rx=".6"/></svg></button>
       <button type="button" id="wclose" class="x" aria-label="Close"><svg viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
@@ -658,6 +748,10 @@ body.native .tbar .logo{cursor:default}
         <div class="nav" id="navsrc"></div>
         <div class="grp">COLLECTIONS</div>
         <div class="nav" id="navcol"></div>
+        <div class="grp" id="navcatgrp" hidden>CATEGORIES</div>
+        <div class="nav" id="navcat"></div>
+        <div class="grp" id="navtaggrp" hidden>TAGS</div>
+        <div class="nav" id="navtag"></div>
       </div>
       <div class="railfoot">
         <div class="drive">
@@ -775,13 +869,29 @@ body.native .tbar .logo{cursor:default}
   </div>
  </div>
 </div>
+<div id="padhelp">
+  <span class="a"><b>A</b>Play</span>
+  <span class="x"><b>X</b>Details</span>
+  <span class="y"><b>Y</b>Favourite</span>
+  <span class="b"><b>B</b>Back</span>
+  <span><b>LB</b>/<b>RB</b>&nbsp;Pages</span>
+  <span><b>&#9776;</b>Start&nbsp;· windowed</span>
+</div>
 <div class="cap"><strong>GAMEBOX</strong><span>Home · Library · Collections · Artwork · Settings</span><span>Real library from drive Z: — metadata, covers and file listings read from this PC</span></div>
 </div>
 
 <script>
-const G=/*LIBRARY*/[];
+/* The library arrives from the backend, not from inside this file. It used
+   to be a `const G=[...]` literal that the scanner spliced in with a regex,
+   which is why a scan had to rewrite the page and the app had to reload it.
+   Now loadLibrary() asks for it. (A file:// page cannot fetch() a sibling
+   file, so it comes over the bridge - the artwork is still <img src>, which
+   file:// does allow.) */
+let G=[];
 const STORES={steam:{n:"Steam",c:"var(--steam)"},gog:{n:"GOG",c:"var(--gog)"},epic:{n:"Epic",c:"var(--epic)"},
- ea:{n:"EA App",c:"var(--ea)"},emu:{n:"Emulated",c:"var(--emu)"},local:{n:"Folder",c:"var(--local)"}};
+ ea:{n:"EA app",c:"var(--ea)"},xbox:{n:"Xbox",c:"var(--xbox)"},ubisoft:{n:"Ubisoft",c:"var(--ubisoft)"},
+ bnet:{n:"Battle.net",c:"var(--bnet)"},amazon:{n:"Amazon",c:"var(--amazon)"},itch:{n:"itch.io",c:"var(--itch)"},
+ emu:{n:"Emulated",c:"var(--emu)"},local:{n:"Folder",c:"var(--local)"}};
 const SRCN={"steam-cache":"Steam cache","gog-cache":"GOG cache","steam-cdn":"Steam CDN","generated":"Generated"};
 /* Collections are derived from the library that is actually here: any series with
    two or more games, plus a few rules that hold for any library. */
@@ -837,34 +947,100 @@ function renderMe(){
   sb.textContent=!G.length?"no library yet":src.slice(0,3).join(" \u00b7 ")+(src.length>3?" +"+(src.length-3):"");
 }
 function greeting(){const h=new Date().getHours();return h<5?"Still up":h<12?"Good morning":h<18?"Good afternoon":"Good evening"}
-let favs=LS("favs",G.filter(g=>g.fav).map(g=>g.id));
-let hidden=LS("hidden",[]);
-const S={page:"home",view:LS("view","grid"),sort:LS("sort","played"),q:"",filters:[],sel:0,tab:"overview",store:null,collection:null};
+/* Favourites and hidden games live in library.json, on the game. They used to
+   be localStorage lists of scan-order integers - so a rescan, which renumbered
+   everything, silently re-pointed them at different games. These two are just
+   views over the library, rebuilt whenever it loads. */
+let favs=[],hidden=[];
+function readUserFields(){
+  favs=G.filter(g=>g.fav).map(g=>g.id);
+  hidden=G.filter(g=>g.hide).map(g=>g.id);
+}
+/* Real capacity of the fixed drives, filled in from Api.drives(). Until the
+   bridge answers, the storage meter scales to the library itself. */
+const DISK={total:0,used:0};
+/* When the scanner last wrote the library. Filled in when it loads. */
+let SCANNED="";
+const S={page:"home",view:LS("view","grid"),sort:LS("sort","played"),q:"",filters:[],sel:null,tab:"overview",store:null,collection:null,tag:null,cat:null};
 const isFav=g=>favs.includes(g.id);
+/* Seconds -> "3h 12m". Playtime is recorded for every game now, not only the
+   ones Steam happened to write a date for. */
+function hrs(sec){
+  sec=Math.max(0,sec|0);
+  if(!sec)return "";
+  const h=Math.floor(sec/3600),m=Math.round((sec%3600)/60);
+  return h?(h+"h"+(m?" "+m+"m":"")):(m?m+"m":"under a minute");
+}
+
+/* Which games are running right now, and for how long. The backend watches the
+   install folder rather than a process, because launching a Steam or Epic game
+   hands off to the launcher and leaves nothing of ours to wait on. */
+let PLAYING={};
+let playTimer=null;
+function pollPlaying(){
+  const api=bridge();
+  if(!api||!api.playing)return;
+  clearTimeout(playTimer);
+  api.playing().then(j=>{
+    if(!j||!j.ok)return;
+    const before=Object.keys(PLAYING);
+    PLAYING=j.playing||{};
+    const after=Object.keys(PLAYING);
+    const stopped=before.some(id=>!(id in PLAYING));
+    if(stopped){
+      // a game just exited, so its session has been written to the library -
+      // re-read it rather than only redrawing. loadLibrary() renders.
+      loadLibrary().then(renderPlayingTimers);
+    }else{
+      if(before.length!==after.length)render();
+      renderPlayingTimers();
+    }
+    if(after.length||(j.waiting||[]).length)playTimer=setTimeout(pollPlaying,5000);
+  }).catch(()=>{});
+}
+
+/* Tick the live timers without redrawing the whole page every five seconds. */
+function renderPlayingTimers(){
+  document.querySelectorAll("[data-playing]").forEach(el=>{
+    const s=PLAYING[el.dataset.playing];
+    el.textContent=s==null?"":("Playing · "+(hrs(s)||"just started"));
+    el.hidden=s==null;
+  });
+}
 
 /* ---------- filtering ---------- */
-const SORTS={played:"Recently played",title:"Title A–Z",size:"Size on disk",updated:"Last updated",store:"Store"};
+const SORTS={played:"Recently played",playtime:"Most played",title:"Title A–Z",size:"Size on disk",updated:"Last updated",store:"Store"};
 function visible(){
   let a=G.filter(g=>!hidden.includes(g.id));
   const p=S.page;
-  if(p==="continue")a=a.filter(g=>g.played);
+  if(p==="continue")a=a.filter(g=>g.played||g.secs);
   if(p==="installed")a=a.filter(g=>g.state!=="err");
-  if(p==="never")a=a.filter(g=>g.state==="new");
+  if(p==="never")a=a.filter(g=>!g.secs&&!g.played);
   if(p==="favorites")a=a.filter(isFav);
   if(p==="source")a=a.filter(g=>g.s===S.store);
   if(p==="collection"){const c=COLLECTIONS.find(c=>c.n===S.collection);if(c)a=a.filter(c.m)}
+  if(p==="tag")a=a.filter(g=>(g.tags||[]).includes(S.tag));
+  if(p==="category")a=a.filter(g=>(g.cats||[]).includes(S.cat));
   if(S.q){const q=S.q.toLowerCase();
-    a=a.filter(g=>(g.t+" "+g.path+" "+STORES[g.s].n+" "+(g.meta&&g.meta.dev||"")+" "+(g.meta&&(g.meta.genres||[]).join(" ")||"")).toLowerCase().includes(q))}
+    // your own words count as much as the store's: a tag, a category, a note
+    a=a.filter(g=>[g.t,g.path,STORES[g.s].n,g.meta&&g.meta.dev,
+                   g.meta&&(g.meta.genres||[]).join(" "),
+                   (g.tags||[]).join(" "),(g.cats||[]).join(" "),g.done,g.note]
+                  .join(" ").toLowerCase().includes(q))}
   S.filters.forEach(f=>{
     if(f==="installed")a=a.filter(g=>g.state!=="err");
-    if(f==="never")a=a.filter(g=>g.state==="new");
+    if(f==="never")a=a.filter(g=>!g.secs&&!g.played);
     if(f==="update")a=a.filter(g=>g.state==="upd");
     if(f==="fav")a=a.filter(isFav);
     if(f==="coop")a=a.filter(g=>(g.meta&&g.meta.cats||[]).some(c=>/Co-op|Split/.test(c)));
     if(f==="pad")a=a.filter(g=>(g.meta&&g.meta.cats||[]).some(c=>/controller/i.test(c)));
     if(f==="vr")a=a.filter(g=>g.vr||(g.meta&&g.meta.cats||[]).some(c=>/VR/.test(c)));
+    if(f==="unplayed")a=a.filter(g=>!g.secs);
+    if(f.indexOf("tag:")===0){const v=f.slice(4);a=a.filter(g=>(g.tags||[]).includes(v))}
+    if(f.indexOf("done:")===0){const v=f.slice(5);a=a.filter(g=>g.done===v)}
   });
   const k={played:g=>-(Date.parse(g.played||"1970")||0),title:g=>g.t.toLowerCase(),size:g=>-g.gb,
+           playtime:g=>-(g.secs||0),
            updated:g=>-(Date.parse(g.upd||"1970")||0),store:g=>STORES[g.s].n+g.t}[S.sort];
   return a.sort((x,y)=>{const a1=k(x),b1=k(y);return a1<b1?-1:a1>b1?1:0});
 }
@@ -932,39 +1108,112 @@ function renderRail(){
     `<a href="#" data-go="${p}" class="${S.page===p?"on":""}">
       <svg viewBox="0 0 24 24">${ic}</svg>${l}${c!=null?`<span class="${w?"warnct":"ct"}">${c}</span>`:""}</a>`).join("");
   const bys={};G.filter(g=>!hidden.includes(g.id)).forEach(g=>bys[g.s]=(bys[g.s]||0)+1);
-  document.getElementById("navsrc").innerHTML=Object.keys(STORES).map(k=>
+  const haveSrc=Object.keys(STORES).filter(k=>bys[k]);
+  document.getElementById("navsrc").innerHTML=(haveSrc.length?haveSrc:Object.keys(STORES).slice(0,3)).map(k=>
     `<a href="#" data-src="${k}" class="${S.page==="source"&&S.store===k?"on":""}">
       <i class="sq" style="background:${STORES[k].c};color:${STORES[k].c}"></i>${STORES[k].n}<span class="ct">${bys[k]||0}</span></a>`).join("")
-    +`<a href="#" class="scanopen" style="color:var(--tx3)"><i class="sq" style="background:#4a5364"></i>Xbox / Game Pass<span class="ct" style="color:var(--acc2)">Connect</span></a>`;
+    +`<a href="#" class="scanopen" style="color:var(--tx3)"><i class="sq" style="background:#4a5364"></i>Scan for more<span class="ct" style="color:var(--acc2)">+</span></a>`;
   document.getElementById("navcol").innerHTML=COLLECTIONS.map(c=>{
     const k=G.filter(g=>!hidden.includes(g.id)).filter(c.m).length;
     return `<a href="#" data-col="${c.n}" class="${S.collection===c.n&&S.page==="collection"?"on":""}">${c.n}<span class="ct">${k}</span></a>`}).join("");
+  // Categories and tags are yours, so they only appear once you have made some.
+  const shown=G.filter(g=>!hidden.includes(g.id));
+  const listRow=(kind,vals,active)=>vals.map(v=>{
+    const k=shown.filter(g=>(kind==="cat"?g.cats:g.tags)||[]).filter(g=>
+      ((kind==="cat"?g.cats:g.tags)||[]).includes(v)).length;
+    return `<a href="#" data-${kind}="${esc(v)}" class="${active===v?"on":""}">${v}<span class="ct">${k}</span></a>`;
+  }).join("");
+  const cats=allCats(),tags=allTags();
+  document.getElementById("navcatgrp").hidden=!cats.length;
+  document.getElementById("navtaggrp").hidden=!tags.length;
+  document.getElementById("navcat").innerHTML=listRow("cat",cats,S.page==="category"?S.cat:null);
+  document.getElementById("navtag").innerHTML=listRow("tag",tags,S.page==="tag"?S.tag:null);
+
   const bysz={};G.forEach(g=>bysz[g.s]=(bysz[g.s]||0)+g.gb);
   const tot=Object.values(bysz).reduce((a,b)=>a+b,0);
+  // Scale to the machine's real fixed-disk capacity. With no bridge (or no
+  // drives yet) fall back to the library's own size, so the bar still reads.
+  const cap=DISK.total||tot||1;
+  const other=Math.max(0,(DISK.used||tot)-tot);
   document.getElementById("meter").innerHTML=Object.keys(STORES).map(k=>
-    `<i style="width:${(bysz[k]||0)/1863*100}%;background:${STORES[k].c}"></i>`).join("")+
-    `<i style="width:${(1374-tot)/1863*100}%;background:rgba(255,255,255,.18)"></i>`;
+    `<i style="width:${(bysz[k]||0)/cap*100}%;background:${STORES[k].c}"></i>`).join("")+
+    `<i style="width:${other/cap*100}%;background:rgba(255,255,255,.18)"></i>`;
   document.getElementById("legend").innerHTML=Object.keys(STORES).filter(k=>bysz[k]>10).map(k=>
     `<span><b style="background:${STORES[k].c}"></b>${Math.round(bysz[k])}</span>`).join("")+
     `<span><b style="background:rgba(255,255,255,.18)"></b>other</span>`;
-  document.getElementById("srcrows").innerHTML=Object.keys(STORES).map(k=>{
+  document.getElementById("srcrows").innerHTML=(haveSrc.length?haveSrc:Object.keys(STORES).slice(0,3)).map(k=>{
     const cnt=bys[k]||0,sz=Math.round(bysz[k]||0);
     return `<div class="srcrow" data-src="${k}"><i style="background:${STORES[k].c};color:${STORES[k].c}"></i>
       <div><div class="nm">${STORES[k].n}</div><div class="st">${sz} GB installed</div></div><span class="cnt">${cnt}</span></div>`}).join("")+
-    `<div class="srcrow scanopen"><i style="background:#4a5364"></i><div><div class="nm">Xbox / Game Pass</div><div class="st">Not connected</div></div><button class="connect" type="button">Connect</button></div>`;
+    `<div class="srcrow scanopen"><i style="background:#4a5364"></i><div><div class="nm">Something missing?</div>
+      <div class="st">Xbox, Ubisoft, EA, Battle.net, Amazon and itch.io are all read from this PC</div></div>
+      <button class="connect" type="button">Scan</button></div>`;
 }
 
 /* ---------- toolbar ---------- */
-const FILTERS=[["installed","Installed"],["never","Never played"],["update","Needs update"],["fav","Favorites"],
+/* How many games the scanner has been told to stop importing. Asked for only
+   when the Settings page is open, since nothing else shows it. */
+function fillExclusions(){
+  const el=document.getElementById("exclinfo"),api=bridge();
+  if(!el||!api||!api.exclusions)return;
+  api.exclusions().then(j=>{
+    const n=(j&&j.ids||[]).length;
+    el.textContent=n?(n+" game"+(n===1?"":"s")+" the scanner will not import again")
+      :"Nothing excluded — remove a game with “never import again” to keep the scanner from finding it";
+  }).catch(()=>{});
+}
+
+/* ---------- saved views ---------- */
+/* A search, a set of chips and a sort, kept under a name. Playnite calls these
+   filter presets; they are the difference between re-building "unplayed co-op
+   games over 20 GB" every time and clicking it. */
+let PRESETS=LS("presets",[]);
+const currentView=()=>({q:S.q,filters:S.filters.slice().sort(),sort:S.sort,page:S.page,
+                        store:S.store,collection:S.collection,tag:S.tag,cat:S.cat});
+function samePreset(p){
+  const c=currentView();
+  return p.q===c.q&&p.sort===c.sort&&p.page===c.page&&p.store===c.store&&
+         p.collection===c.collection&&p.tag===c.tag&&p.cat===c.cat&&
+         (p.filters||[]).join("|")===c.filters.join("|");
+}
+function savePreset(){
+  const c=currentView();
+  const bits=[c.q&&('"'+c.q+'"'),...c.filters.map(f=>
+    f.indexOf("done:")===0?f.slice(5):f.indexOf("tag:")===0?f.slice(4):
+    (FILTERS.find(x=>x[0]===f)||[,f])[1])].filter(Boolean);
+  const name=(prompt("Name this view",bits.join(" + ").slice(0,40)||SORTS[c.sort])||"").trim();
+  if(!name)return;
+  PRESETS=[...PRESETS.filter(p=>p.name!==name),Object.assign({name},c)];
+  SS("presets",PRESETS);
+  showToast("Saved view: "+name);
+  render();
+}
+function applyPreset(p){
+  S.q=p.q||"";S.filters=(p.filters||[]).slice();S.sort=p.sort||"played";
+  S.page=p.page||"library";S.store=p.store||null;S.collection=p.collection||null;
+  S.tag=p.tag||null;S.cat=p.cat||null;
+  qi.value=S.q;
+  document.getElementById("qclr").hidden=!S.q;
+  render();
+}
+
+const FILTERS=[["installed","Installed"],["never","Never played"],["unplayed","No playtime"],
+               ["update","Needs update"],["fav","Favorites"],
                ["coop","Co-op"],["pad","Controller"],["vr","VR"]];
 function renderToolbar(){
-  const bar=document.getElementById("toolbar"),show=["library","continue","installed","never","favorites","source","collection"].includes(S.page);
+  const bar=document.getElementById("toolbar"),show=["library","continue","installed","never","favorites","source","collection","tag","category"].includes(S.page);
   bar.classList.toggle("hide",!show);
   if(!show)return;
   const v=visible();
   document.getElementById("chips").innerHTML=
     `<span class="chip ${S.filters.length?"":"on"}" data-f="">All <span class="n">${G.length-hidden.length}</span></span>`+
     FILTERS.map(([k,l])=>`<span class="chip ${S.filters.includes(k)?"on":""}" data-f="${k}">${l}</span>`).join("")+
+    // completion statuses become chips as soon as any game has one
+    [...new Set(G.map(g=>g.done).filter(Boolean))].sort().map(d=>
+      `<span class="chip ${S.filters.includes("done:"+d)?"on":""}" data-f="done:${esc(d)}">${d}</span>`).join("")+
+    (PRESETS.length?`<span class="chipsep"></span>`+PRESETS.map((pr,i)=>
+      `<span class="chip preset ${samePreset(pr)?"on":""}" data-preset="${i}" title="saved view">${pr.name}<b data-preset-del="${i}">×</b></span>`).join(""):"")+
+    `<span class="chip save" data-preset-save="1" title="save this search, filters and sort as a view">+ Save view</span>`+
     `<span class="count">${v.length} shown · ${fmtGB(v.reduce((a,b)=>a+b.gb,0))}</span>`;
   document.getElementById("sortlbl").textContent=SORTS[S.sort];
   document.getElementById("sortmenu").innerHTML=Object.entries(SORTS).map(([k,l])=>
@@ -1007,7 +1256,8 @@ const tileHTML=g=>{const st=STORES[g.s],[lab,cls]=stateLabel(g),c=cov(g);
       <span class="tacts"><button data-play="${g.id}">▶ PLAY</button><button data-inspect="${g.id}">3D</button>
         <button class="${isFav(g)?"starred":""}" data-fav="${g.id}">★</button></span>
     </div>
-    <div class="tfoot">${isFav(g)?'<span class="fav">★</span>':""}${STORES[g.s].n}<span class="sz">${g.gb} GB</span></div>
+    <div class="tfoot">${isFav(g)?'<span class="fav">★</span>':""}${STORES[g.s].n}<span class="sz">${g.secs?hrs(g.secs):g.gb+" GB"}</span></div>
+    <div class="nowplaying" data-playing="${g.id}" hidden></div>
   </div>`};
 
 function pageLibrary(){
@@ -1065,6 +1315,7 @@ function pageDetails(v){
               <button class="btn2" type="button" data-inspect="${g.id}"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18"/></svg>Inspect case</button>
               <button class="btn2 icon ${isFav(g)?"fav":""}" type="button" data-fav="${g.id}"><svg viewBox="0 0 24 24"><path d="M12 4l2.4 5 5.6.8-4 3.9 1 5.5-5-2.7-5 2.7 1-5.5-4-3.9 5.6-.8z"/></svg></button>
               <button class="btn2" type="button" data-hide="${g.id}">Hide</button>
+              <button class="btn2" type="button" data-drop="${g.id}" title="Remove it, and stop the scanner finding it again">Remove…</button>
             </div>
             <div class="hpath"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>${g.path}</div>
           </div>
@@ -1093,7 +1344,7 @@ function tabBody(g,lab,cls){
     const cloud=(m.cats||[]).includes("Steam Cloud");
     return `<div class="dgrid">
       <div class="dcard"><div class="k">CLOUD SAVES</div><div class="v" style="font-size:.8cqw;color:${cloud?"var(--ok)":"var(--tx3)"}">${cloud?"Enabled":g.s==="emu"||g.s==="local"?"Not available":"Handled by "+g.via}</div></div>
-      <div class="dcard"><div class="k">SYNCED</div><div class="v" style="font-size:.8cqw">${cloud?"2 min ago":"—"}</div></div>
+      <div class="dcard"><div class="k">SYNCED</div><div class="v" style="font-size:.8cqw;color:var(--tx3)">${cloud?"Not tracked":"—"}</div></div>
       <div class="dcard"><div class="k">SAVE HANDLER</div><div class="v" style="font-size:.8cqw">${g.via}</div></div>
       <div class="dcard wide"><div class="k">NOTE</div><div class="v" style="font-size:.68cqw;font-family:var(--body);font-weight:400;color:var(--tx2)">
         ${g.s==="emu"?"Emulator save states live beside the disc image in the game folder — they are not covered by any cloud service.":
@@ -1101,11 +1352,18 @@ function tabBody(g,lab,cls){
     </div>`;
   }
   if(S.tab==="activity"){
-    const ev=[["Last played",g.played,g.played?"a":""],["Files updated on disk",g.upd,"g"],["Added to GameBox","Sep 7, 2026",""],
-      ["Artwork resolved",asrc(g)||"none",""],["Indexed by scanner","Sep 7, 2026",""]];
+    const ev=[["Last played",g.played,g.played?"a":""],
+      ["Time played",g.secs?hrs(g.secs):"",g.secs?"a":""],
+      ["Sessions",g.plays?String(g.plays):"",""],
+      ["Files updated on disk",g.upd,"g"],
+      ["Added to GameBox",g.added||"—",""],
+      ["Artwork resolved",asrc(g)||"none",""],["Indexed by scanner",SCANNED||"—",""]];
     return `<div class="tl">${ev.map(([t,w,c])=>`<div class="ev"><span class="dot ${c}"></span>
-      <span><span class="tt">${t}</span><span class="ds">${t==="Last played"&&!g.played?"never launched since install":t==="Artwork resolved"?"source used for the cover":""}</span></span>
-      <span class="when">${w||"never"}</span></div>`).join("")}</div>`;
+      <span><span class="tt">${t}</span><span class="ds">${
+        t==="Last played"&&!g.played&&!g.secs?"never launched since install":
+        t==="Time played"?"recorded by GameBox, not by the store":
+        t==="Artwork resolved"?"source used for the cover":""}</span></span>
+      <span class="when">${w||(t==="Time played"||t==="Sessions"?"none yet":"never")}</span></div>`).join("")}</div>`;
   }
   return `<div class="dgrid">
     ${m.desc?`<div class="dcard wide"><div class="k">ABOUT</div><p class="blurb" style="margin-top:.25cqw">${m.desc}</p></div>`:""}
@@ -1113,6 +1371,7 @@ function tabBody(g,lab,cls){
     <div class="dcard"><div class="k">SIZE ON DISK</div><div class="v">${g.gb} <small>GB</small></div></div>
     <div class="dcard"><div class="k">STATE</div><div class="v" style="font-size:.8cqw;color:${cls==="err"?"var(--bad)":cls==="upd"?"var(--warn)":cls==="new"?"var(--ok)":"var(--tx)"}">${lab}</div></div>
     <div class="dcard"><div class="k">LAST PLAYED</div><div class="v" style="font-size:.8cqw">${g.played||"Never"}</div></div>
+    <div class="dcard"><div class="k">PLAYTIME</div><div class="v" style="font-size:.8cqw">${g.secs?hrs(g.secs):"—"}${g.plays?`<small style="display:block;font-size:.55cqw;color:var(--tx3)">${g.plays} session${g.plays===1?"":"s"}</small>`:""}</div></div>
     ${m.dev?`<div class="dcard"><div class="k">DEVELOPER</div><div class="v" style="font-size:.75cqw">${m.dev}</div></div>`:""}
     ${m.pub?`<div class="dcard"><div class="k">PUBLISHER</div><div class="v" style="font-size:.75cqw">${m.pub}</div></div>`:""}
     ${m.rel?`<div class="dcard"><div class="k">RELEASED</div><div class="v" style="font-size:.8cqw">${m.rel}</div></div>`:""}
@@ -1131,7 +1390,7 @@ function pageHome(){
     '<div style="margin-top:.8cqw"><button class="btn2 scanopen" type="button">Run setup</button></div></div>';return}
   const played=G.filter(g=>g.played).sort((a,b)=>Date.parse(b.played)-Date.parse(a.played));
   const recent=[...G].sort((a,b)=>Date.parse(b.upd)-Date.parse(a.upd)).slice(0,10);
-  const never=G.filter(g=>g.state==="new"),neverGB=never.reduce((a,b)=>a+b.gb,0);
+  const never=G.filter(g=>!g.secs&&!g.played),neverGB=never.reduce((a,b)=>a+b.gb,0);
   const nodata=G.filter(g=>!g.played&&g.state!=="new").length;
   const hero=played[0]||G[0];
   const mini=a=>a.map(g=>`<div class="mcard" data-id="${g.id}">
@@ -1201,6 +1460,19 @@ function pageSettings(){
           .map(([a,b])=>`<div class="accdot ${LS("acc","#ff7a1a")===a?"on":""}" data-acc="${a}" data-acc2="${b}" style="background:linear-gradient(140deg,${b},${a})"></div>`).join("")}</div></div>
       <div class="setrow"><div><div class="t">Hidden games</div><div class="d">${hidden.length} hidden — dev tools and duplicates stay out of the library</div></div>
         <button class="btn2" data-unhide="1" style="margin-left:auto">Restore all</button></div>
+      <div class="setrow"><div><div class="t">Add a game by hand</div>
+        <div class="d">For anything the scanner cannot see — a shortcut, a launcher link, an old install. A scan never removes it.</div>
+        <div class="addgame">
+          <input id="addtitle" placeholder="Name" autocomplete="off">
+          <input id="addtarget" placeholder="C:\Games\Thing\thing.exe  or  steam://rungameid/620" autocomplete="off">
+          <button class="btn2" id="addgo" type="button">Add</button>
+        </div></div></div>
+      <div class="setrow"><div><div class="t">Never import again</div>
+        <div class="d" id="exclinfo">Nothing excluded — remove a game with “never import again” to keep the scanner from finding it</div></div>
+        <button class="btn2" id="unexcl" style="margin-left:auto">Allow all</button></div>
+      <div class="setrow"><div><div class="t">Saved views</div>
+        <div class="d">${PRESETS.length?PRESETS.map(p=>p.name).join(" · "):"None yet — set up a search and some filters, then Save view"}</div></div>
+        ${PRESETS.length?`<button class="btn2" id="clrpresets" style="margin-left:auto">Clear</button>`:""}</div>
       <div class="setrow"><div><div class="t">Run setup again</div><div class="d">Pick drives and rebuild the library from scratch</div></div>
         <button class="btn2" id="rerun" style="margin-left:auto">Open setup</button></div>
       <div class="setrow"><div><div class="t">Library data</div><div class="d" id="libinfo">-</div></div>
@@ -1210,6 +1482,11 @@ function pageSettings(){
 const title=()=>({library:"All games",continue:"Continue playing",installed:"Installed",never:"Never played",
   favorites:"Favorites",source:S.store?STORES[S.store].n:"",collection:S.collection})[S.page]||"Library";
 const byId=id=>G.find(g=>g.id===id)||G[0];
+/* byId falls back to the first game so a half-drawn page cannot crash, which is
+   fine for rendering and dangerous for anything that acts on a game: an id that
+   does not resolve would quietly start the wrong one. Anything with a
+   consequence asks for the game by name. */
+const exactly=id=>G.find(g=>g.id===id)||null;
 
 function renderSide(){
   const g=byId(S.sel),st=STORES[g.s],[lab]=stateLabel(g),c=cov(g),m=g.meta||{};
@@ -1239,7 +1516,7 @@ function liveStats(){
   const bySrc=G.reduce((a,g)=>{const k=g.art?g.art.s:"none";a[k]=(a[k]||0)+1;return a},{});
   const real=(bySrc["steam-cache"]||0)+(bySrc["gog-cache"]||0)+(bySrc["steam-cdn"]||0);
   const gen=bySrc.generated||0;
-  const never=G.filter(g=>g.state==="new"), neverGB=never.reduce((a,b)=>a+b.gb,0);
+  const never=G.filter(g=>!g.secs&&!g.played), neverGB=never.reduce((a,b)=>a+b.gb,0);
   const stores=Object.keys(G.reduce((a,g)=>{a[g.s]=1;return a},{})).length;
   const set=(id,html)=>{const e=document.getElementById(id);if(e)e.innerHTML=html};
   set("artnum", withArt+"<small>OF "+n+" COVERS</small>");
@@ -1247,10 +1524,6 @@ function liveStats(){
   set("recnum", neverGB.toFixed(1)+"<small>GB \u00b7 "+never.length+" GAMES</small>");
   set("start", "Artwork: "+real+" real \u00b7 "+gen+" generated");
   set("stsrc", (BACKEND.on?"Ready to launch \u00b7 ":"")+n+" games across "+stores+" sources");
-  const rc=document.getElementById("resultcount");
-  if(rc&&!["home","collections","artwork","settings"].includes(S.page)){
-    const v=visible();rc.textContent=v.length+" shown \u00b7 "+fmtGB(v.reduce((a,b)=>a+b.gb,0));
-  }
   const q=document.getElementById("q");
   if(q)q.placeholder="Search "+n+" games, stores or folders\u2026";
   const gb=G.reduce((a,b)=>a+b.gb,0), el=id=>document.getElementById(id);
@@ -1267,13 +1540,14 @@ function render(){
   if(S.page==="home")pageHome();
   else if(S.page==="collections")pageCollections();
   else if(S.page==="artwork")pageArtwork();
-  else if(S.page==="settings")pageSettings();
+  else if(S.page==="settings"){pageSettings();fillExclusions()}
   else pageLibrary();
   const side=document.querySelector(".side");
   if(G.length){if(side)side.style.display="";renderSide()}
   else if(side)side.style.display="none";
   liveStats();renderMe();
   document.getElementById("crumb").textContent=S.page==="source"?STORES[S.store].n:S.page==="collection"?S.collection:
+    S.page==="tag"?"Tagged “"+S.tag+"”":S.page==="category"?S.cat:
     ({home:"Home",library:"All games",continue:"Continue playing",installed:"Installed",never:"Never played",
       favorites:"Favorites",collections:"Collections",artwork:"Artwork",settings:"Settings"})[S.page]||"Library";
 }
@@ -1282,19 +1556,86 @@ function go(p){S.page=p;S.store=null;S.collection=null;content.scrollTop=0;rende
 /* ---------- events ---------- */
 document.addEventListener("click",e=>{
   const t=e.target;
-  const f=t.closest("[data-fav]");if(f){const id=+f.dataset.fav;favs=isFav(byId(id))?favs.filter(x=>x!==id):[...favs,id];SS("favs",favs);
-    showToast((isFav(byId(id))?"Added to":"Removed from")+" favorites: "+byId(id).short);render();return}
-  const h=t.closest("[data-hide]");if(h){const id=+h.dataset.hide;hidden=[...hidden,id];SS("hidden",hidden);
-    showToast(byId(id).short+" hidden — restore it in Settings");if(S.sel===id)S.sel=visible()[0]?visible()[0].id:0;render();return}
-  if(t.closest("[data-unhide]")){hidden=[];SS("hidden",hidden);showToast("All hidden games restored");render();return}
-  const p=t.closest("[data-play]");if(p){e.stopPropagation();launchGame(+p.dataset.play);return}
-  const ins=t.closest("[data-inspect]");if(ins){e.stopPropagation();openInspector(+ins.dataset.inspect,ins);return}
-  const d=t.closest("[data-detail]");if(d){S.sel=+d.dataset.detail;S.view="details";SS("view",S.view);
-    if(!["library","continue","installed","never","favorites","source","collection"].includes(S.page))S.page="library";render();return}
+  // Removing a game is the one destructive thing in here, and "for good" also
+  // tells the scanner to stop finding it - so both are asked about plainly.
+  const dr=t.closest("[data-drop]");if(dr){
+    const id=dr.dataset.drop,g=byId(id),api=bridge();
+    if(!g)return;
+    if(!confirm("Remove "+g.t+" from the library?\n\nThis does not touch the game itself, only what GameBox recorded about it."))return;
+    const forever=confirm("Also stop the scanner finding it again?\n\nOK to exclude it for good, Cancel to let the next scan re-import it.");
+    if(api&&api.remove_game)api.remove_game(id,forever).then(j=>{
+      showToast(j.ok?(forever?g.t+" removed and excluded":g.t+" removed"):j.msg);
+      if(j.ok){if(S.sel===id)S.sel=null;loadLibrary()}
+    }).catch(e=>showToast("Could not remove it: "+e));
+    return}
+
+  // ---- settings: adding a game, exclusions, clearing views
+  if(t.closest("#addgo")){
+    const api=bridge();
+    const title=document.getElementById("addtitle"),target=document.getElementById("addtarget");
+    if(!api||!api.add_game){showToast("Adding a game needs the app, not a browser");return}
+    api.add_game({title:title.value,target:target.value}).then(j=>{
+      showToast(j.ok?"Added "+title.value:j.msg);
+      if(j.ok){title.value="";target.value="";loadLibrary()}
+    }).catch(e=>showToast("Could not add it: "+e));
+    return}
+  if(t.closest("#unexcl")){
+    const api=bridge();
+    if(api&&api.unexclude)api.unexclude().then(()=>{showToast("The scanner can import everything again");render()});
+    return}
+  if(t.closest("#clrpresets")){PRESETS=[];SS("presets",PRESETS);showToast("Saved views cleared");render();return}
+
+  // ---- saved views
+  const pd=t.closest("[data-preset-del]");if(pd){
+    const p=PRESETS[+pd.dataset.presetDel];
+    PRESETS=PRESETS.filter((_x,i)=>i!==+pd.dataset.presetDel);SS("presets",PRESETS);
+    showToast("Removed view: "+(p?p.name:""));render();return}
+  const pa=t.closest("[data-preset]");if(pa){applyPreset(PRESETS[+pa.dataset.preset]);return}
+  if(t.closest("[data-preset-save]")){savePreset();return}
+
+  // ---- organising: status, score, tags, categories
+  const dn=t.closest("[data-done]");if(dn){
+    const id=dn.dataset.done,g=byId(id),v=dn.dataset.val;
+    setUser(id,{completion:g.done===v?null:v});   // clicking the current one clears it
+    renderOrganise(id);render();return}
+  const scl=t.closest("[data-score-clear]");if(scl){
+    setUser(scl.dataset.scoreClear,{score:null});renderOrganise(scl.dataset.scoreClear);render();return}
+  const td=t.closest("[data-tag-del]");if(td){
+    editList(td.dataset.tagDel,"tags",td.dataset.val,true);return}
+  const cd=t.closest("[data-cat-del]");if(cd){
+    editList(cd.dataset.catDel,"cats",cd.dataset.val,true);return}
+  const ta=t.closest("[data-tag-add-now]");if(ta){
+    editList(ta.dataset.tagAddNow,"tags",ta.dataset.val,false);return}
+  const ca=t.closest("[data-cat-add-now]");if(ca){
+    editList(ca.dataset.catAddNow,"cats",ca.dataset.val,false);return}
+  const em=t.closest("[data-emu]");if(em){
+    const id=em.dataset.emu,api=bridge();
+    if(api&&api.set_emulator)api.set_emulator(id,
+        {emulator:em.dataset.emuId,profile:+em.dataset.emuProf}).then(j=>{
+      showToast(j.ok?"Will open with "+j.via:"Could not use that emulator — "+j.msg);
+      if(j.ok){const g=byId(id);if(g)g.via=j.via;renderEmuPicker(id)}
+    }).catch(()=>{});
+    return}
+  const f=t.closest("[data-fav]");if(f){const id=f.dataset.fav,g=byId(id),on=!g.fav;
+    setUser(id,{favorite:on});
+    showToast((on?"Added to":"Removed from")+" favorites: "+g.short);render();return}
+  const h=t.closest("[data-hide]");if(h){const id=h.dataset.hide,g=byId(id);
+    setUser(id,{hidden:true});
+    showToast(g.short+" hidden — restore it in Settings");
+    if(S.sel===id)S.sel=visible()[0]?visible()[0].id:null;render();return}
+  if(t.closest("[data-unhide]")){
+    G.filter(g=>g.hide).forEach(g=>setUser(g.id,{hidden:false}));
+    showToast("All hidden games restored");render();return}
+  const p=t.closest("[data-play]");if(p){e.stopPropagation();launchGame(p.dataset.play);return}
+  const ins=t.closest("[data-inspect]");if(ins){e.stopPropagation();openInspector(ins.dataset.inspect,ins);return}
+  const d=t.closest("[data-detail]");if(d){S.sel=d.dataset.detail;S.view="details";SS("view",S.view);
+    if(!["library","continue","installed","never","favorites","source","collection","tag","category"].includes(S.page))S.page="library";render();return}
   if(t.closest(".scanopen")){openSetup(1);return}
   const gp=t.closest("[data-go]");if(gp){go(gp.dataset.go);return}
   const sr=t.closest("[data-src]");if(sr){S.page="source";S.store=sr.dataset.src;S.collection=null;render();return}
   const cl=t.closest("[data-col]");if(cl){S.page="collection";S.collection=cl.dataset.col;S.store=null;render();return}
+  const tg=t.closest("[data-tag]");if(tg){S.page="tag";S.tag=tg.dataset.tag;S.store=null;S.collection=null;render();return}
+  const ct=t.closest("[data-cat]");if(ct){S.page="category";S.cat=ct.dataset.cat;S.store=null;S.collection=null;render();return}
   const ch=t.closest("[data-f]");if(ch){const k=ch.dataset.f;
     S.filters=k===""?[]:S.filters.includes(k)?S.filters.filter(x=>x!==k):[...S.filters,k];render();return}
   const sc=t.closest("[data-sortcol]");if(sc){const map={title:"title",store:"store",size:"size",updated:"updated",played:"played"};
@@ -1303,7 +1644,7 @@ document.addEventListener("click",e=>{
   if(t.closest("#rerun")){openSetup(0);return}
   const st=t.closest("[data-set]");if(st){const k=st.dataset.set,v=!LS(k,k!=="scanstart");SS(k,v);applySettings();render();return}
   const ac=t.closest("[data-acc]");if(ac){SS("acc",ac.dataset.acc);SS("acc2",ac.dataset.acc2);applySettings();render();return}
-  const row=t.closest("[data-id]");if(row){const id=+row.dataset.id,same=S.sel===id;S.sel=id;
+  const row=t.closest("[data-id]");if(row){const id=row.dataset.id,same=S.sel===id;S.sel=id;
     const pops=row.classList.contains("tile")||row.classList.contains("mcard")||row.classList.contains("artcell");
     render();if(pops||same)openInspector(id,row);return}
 });
@@ -1314,8 +1655,24 @@ document.addEventListener("click",e=>{if(!e.target.closest(".dd"))document.getEl
 document.getElementById("views").addEventListener("click",e=>{const b=e.target.closest("button");
   if(b){S.view=b.dataset.v;SS("view",S.view);render()}});
 const qi=document.getElementById("q");
+/* The score slider and the note field write as you use them, debounced so a
+   drag is one save rather than twenty. */
+document.addEventListener("input",e=>{
+  const sl=e.target.closest&&e.target.closest("[data-score]");
+  if(sl){
+    const lbl=document.querySelector("#organise .oscore");
+    if(lbl)lbl.textContent=sl.value;
+    clearTimeout(sl._t);
+    sl._t=setTimeout(()=>{setUser(sl.dataset.score,{score:+sl.value});render()},350);
+    return}
+  const nt=e.target.closest&&e.target.closest("[data-note]");
+  if(nt){
+    clearTimeout(nt._t);
+    nt._t=setTimeout(()=>setUser(nt.dataset.note,{notes:nt.value}),600);
+  }
+});
 qi.addEventListener("input",()=>{S.q=qi.value;document.getElementById("qclr").hidden=!S.q;
-  if(!["library","continue","installed","never","favorites","source","collection"].includes(S.page))S.page="library";render();qi.focus()});
+  if(!["library","continue","installed","never","favorites","source","collection","tag","category"].includes(S.page))S.page="library";render();qi.focus()});
 document.getElementById("qclr").addEventListener("click",()=>{qi.value="";S.q="";render()});
 document.getElementById("inspectlink").addEventListener("click",()=>openInspector(S.sel,document.getElementById("minicase")));
 document.getElementById("minicase").addEventListener("click",()=>openInspector(S.sel,document.getElementById("minicase")));
@@ -1332,18 +1689,158 @@ document.getElementById("notifbtn").addEventListener("click",function(){
 window.addEventListener("keydown",e=>{
   if(e.key==="/"&&document.activeElement!==qi){e.preventDefault();qi.focus()}
   if(e.key==="Escape"){if(document.getElementById("inspector").classList.contains("open"))closeInspector();
-    else if(document.getElementById("scanner").classList.contains("open"))closeScanner();
-    else if(document.activeElement===qi){qi.value="";S.q="";qi.blur();render()}}
+    else if(document.activeElement===qi){qi.value="";S.q="";qi.blur();render()}
+    else if(inFullscreen())setFullscreen(false)}
+  if(e.key==="F11"){e.preventDefault();setFullscreen(!inFullscreen())}
   if(document.activeElement===qi)return;
   if((e.key==="f"||e.key==="F")&&document.getElementById("inspector").classList.contains("open")){e.preventDefault();insFlip()}
   if((e.key==="Enter")&&!document.getElementById("inspector").classList.contains("open"))openInspector(S.sel,document.querySelector(".tile.sel")||document.getElementById("minicase"));
-  const v=visible();if(!v.length)return;const i=v.findIndex(g=>g.id===S.sel);
-  const cols=S.view==="grid"?7:1;
-  if(["ArrowRight","ArrowLeft","ArrowDown","ArrowUp"].includes(e.key)){e.preventDefault();
-    let n=i+(e.key==="ArrowRight"?1:e.key==="ArrowLeft"?-1:e.key==="ArrowDown"?cols:-cols);
-    n=Math.max(0,Math.min(v.length-1,n));S.sel=v[n].id;render();
-    const el=document.querySelector(".tile.sel,tr.sel,.drow.sel");if(el)el.scrollIntoView({block:"nearest"})}
+  if(["ArrowRight","ArrowLeft","ArrowDown","ArrowUp"].includes(e.key)){
+    e.preventDefault();
+    move(e.key==="ArrowRight"?1:e.key==="ArrowLeft"?-1:0,
+         e.key==="ArrowDown"?1:e.key==="ArrowUp"?-1:0);
+  }
 });
+
+/* ---------- moving around ---------- */
+/* How many tiles fit on a row, measured rather than assumed. This was a
+   hardcoded 7, which was right for one window width in one view and wrong
+   everywhere else - and would have been wrong again in fullscreen. */
+function gridColumns(){
+  if(S.view!=="grid")return 1;
+  const tiles=document.querySelectorAll(".tile");
+  if(tiles.length<2)return 1;
+  const top=tiles[0].getBoundingClientRect().top;
+  let n=0;
+  for(const t of tiles){
+    if(Math.abs(t.getBoundingClientRect().top-top)>4)break;
+    n++;
+  }
+  return Math.max(1,n);
+}
+
+/* Move the selection by whole rows and columns. */
+function move(dx,dy){
+  const v=visible();
+  if(!v.length)return;
+  const i=Math.max(0,v.findIndex(g=>g.id===S.sel));
+  const cols=gridColumns();
+  let n=i+dx+dy*cols;
+  n=Math.max(0,Math.min(v.length-1,n));
+  if(n===i)return;
+  S.sel=v[n].id;
+  render();
+  const el=document.querySelector(".tile.sel,tr.sel,.drow.sel");
+  if(el)el.scrollIntoView({block:"nearest"});
+}
+/* ---------- fullscreen, and a controller ---------- */
+/* Playnite ships this as a second application. Here it is a mode of the same
+   page: the chrome goes away, the covers get large, and a gamepad drives it.
+   The layout is already written in container units against the window, so most
+   of the work is deciding what to hide. */
+function setFullscreen(on){
+  const was=document.body.classList.contains("fs");
+  if(on===was)return;
+  document.body.classList.toggle("fs",on);
+  const api=bridge();
+  if(api&&api.set_fullscreen)api.set_fullscreen(on).catch(()=>{});
+  if(on){
+    if(!S.sel&&visible().length)S.sel=visible()[0].id;
+    startPad();
+    showToast("Fullscreen — press B or F11 to leave");
+  }
+  render();
+  const el=document.querySelector(".tile.sel");
+  if(el)el.scrollIntoView({block:"center"});
+}
+const inFullscreen=()=>document.body.classList.contains("fs");
+
+/* A gamepad is polled, not delivered by events. Only while the window has
+   focus: WebView2 reports no pads to a background window, and polling one that
+   is not there is wasted work. */
+const PAD={on:false,prev:{},repeat:0,axis:0};
+// Xbox layout, which is what the Gamepad API standard mapping reports.
+const PAD_A=0,PAD_B=1,PAD_X=2,PAD_Y=3,PAD_LB=4,PAD_RB=5;
+const PAD_BACK=8,PAD_START=9,PAD_UP=12,PAD_DOWN=13,PAD_LEFT=14,PAD_RIGHT=15;
+const PAD_REPEAT_FIRST=420,PAD_REPEAT_NEXT=110;
+
+function startPad(){
+  if(PAD.on)return;
+  PAD.on=true;
+  requestAnimationFrame(pollPad);
+}
+
+/* A controller belongs to whichever window is in front. Its own function so a
+   test can drive the pad without a focused window. */
+let padFocused=()=>document.hasFocus();
+
+function padList(){
+  try{return [...(navigator.getGamepads?navigator.getGamepads():[])].filter(Boolean)}
+  catch(e){return []}
+}
+
+function pollPad(){
+  if(!PAD.on)return;
+  requestAnimationFrame(pollPad);
+  if(!padFocused())return;
+  const pads=padList();
+  if(!pads.length)return;
+  const p=pads[0];
+  const now=performance.now();
+  const down=i=>!!(p.buttons[i]&&p.buttons[i].pressed);
+  const tapped=i=>{const d=down(i),was=PAD.prev[i];PAD.prev[i]=d;return d&&!was};
+
+  // The stick and the d-pad do the same thing, and both repeat while held.
+  const ax=p.axes[0]||0,ay=p.axes[1]||0,DEAD=.55;
+  let dx=(down(PAD_RIGHT)||ax>DEAD)?1:(down(PAD_LEFT)||ax<-DEAD)?-1:0;
+  let dy=(down(PAD_DOWN)||ay>DEAD)?1:(down(PAD_UP)||ay<-DEAD)?-1:0;
+  if(dx||dy){
+    if(!PAD.axis||now>PAD.repeat){
+      move(dx,dy);
+      PAD.repeat=now+(PAD.axis?PAD_REPEAT_NEXT:PAD_REPEAT_FIRST);
+      PAD.axis=1;
+    }
+  }else{PAD.axis=0;PAD.repeat=0}
+
+  if(tapped(PAD_A)){
+    if(insp.classList.contains("open"))launchGame(S.sel);
+    else if(S.sel)launchGame(S.sel);
+  }
+  if(tapped(PAD_B)){
+    if(insp.classList.contains("open"))closeInspector();
+    else if(inFullscreen())setFullscreen(false);
+  }
+  if(tapped(PAD_X)&&S.sel){
+    if(insp.classList.contains("open"))closeInspector();
+    else openInspector(S.sel,document.querySelector(".tile.sel"));
+  }
+  if(tapped(PAD_Y)&&S.sel){
+    const g=byId(S.sel);
+    if(g){setUser(S.sel,{favorite:!g.fav});showToast((g.fav?"Removed from":"Added to")+" favorites: "+g.short);render()}
+  }
+  if(tapped(PAD_LB)||tapped(PAD_RB))padPage(tapped(PAD_RB)?1:-1);
+  if(tapped(PAD_START))setFullscreen(!inFullscreen());
+  if(tapped(PAD_BACK)){qi.focus();qi.select()}
+}
+
+/* LB and RB walk the library pages, so a controller can get anywhere. */
+const PAD_PAGES=["library","continue","installed","never","favorites"];
+function padPage(dir){
+  const at=PAD_PAGES.indexOf(S.page);
+  const n=(at<0?0:at+dir+PAD_PAGES.length)%PAD_PAGES.length;
+  go(PAD_PAGES[n]);
+  showToast(({library:"All games",continue:"Continue playing",installed:"Installed",
+              never:"Never played",favorites:"Favorites"})[PAD_PAGES[n]]);
+}
+
+/* A controller that arrives after the page has loaded should just work. */
+window.addEventListener("gamepadconnected",e=>{
+  startPad();
+  showToast((e.gamepad&&e.gamepad.id?e.gamepad.id.split("(")[0].trim():"Controller")
+            +" connected — press Start for fullscreen");
+});
+if(padList().length)startPad();
+
 function applySettings(){
   const r=document.documentElement.style;
   r.setProperty("--acc",LS("acc","#ff7a1a"));r.setProperty("--acc2",LS("acc2","#ffb648"));
@@ -1356,6 +1853,52 @@ function applySettings(){
 /* ---------- launching (native bridge, with browser fallback) ---------- */
 const BACKEND={on:false,native:false};
 function bridge(){return (window.pywebview&&window.pywebview.api)||null}
+
+/* ---------- the library ---------- */
+function loadLibrary(){
+  const api=bridge();
+  if(!api||!api.library)return Promise.resolve(false);
+  return api.library().then(j=>{
+    if(!j||!j.ok)return false;
+    G=j.games||[];
+    SCANNED=j.scanned||"";
+    readUserFields();
+    COLLECTIONS=buildCollections();
+    if(!G.some(g=>g.id===S.sel))S.sel=G.length?(G.find(g=>g.played)||G[0]).id:null;
+    // An install from before 1.3.0 kept its favourites and hidden games in this
+    // page's localStorage, keyed by the scan-order integer the library no
+    // longer uses. The backend left a translation table behind for exactly one
+    // handover; take it, then stop carrying the old keys around.
+    if(j.pending_migration&&api.migrate_user){
+      api.migrate_user(LS("favs",[]),LS("hidden",[])).then(r=>{
+        try{localStorage.removeItem("gamebox.favs");localStorage.removeItem("gamebox.hidden")}catch(e){}
+        if(r&&r.claimed&&r.moved)return loadLibrary();
+        render();
+      }).catch(()=>render());
+      return true;
+    }
+    render();
+    pollPlaying();          // a game may already be running from a previous launch
+    return true;
+  }).catch(()=>false);
+}
+
+/* One game's user fields, written straight through to library.json. The local
+   copy is updated first so the UI never waits on the disk. */
+function setUser(id,patch){
+  const g=byId(id);
+  if(!g)return;
+  if("favorite" in patch)g.fav=patch.favorite;
+  if("hidden" in patch)g.hide=patch.hidden;
+  if("notes" in patch)g.note=patch.notes;
+  if("tags" in patch)g.tags=patch.tags;
+  if("categories" in patch)g.cats=patch.categories;
+  if("completion" in patch)g.done=patch.completion;
+  if("score" in patch)g.score=patch.score;
+  readUserFields();
+  const api=bridge();
+  if(api&&api.save_game)api.save_game(id,patch).catch(()=>{});
+}
 function onBridgeReady(){
   const api=bridge();
   if(api&&api.status){api.status().then(j=>{
@@ -1370,14 +1913,22 @@ function onBridgeReady(){
     // A page held in the browser cache can be older than the library the
     // scanner wrote. The backend counts the launchable games, so if it has
     // games and this page has none, re-read the page once.
-    if(j.games>0&&!G.length&&!sessionStorage.getItem("gb.refreshed")){
-      try{sessionStorage.setItem("gb.refreshed","1")}catch(e){}
-      location.reload();return;
-    }
-    if(G.length)try{sessionStorage.removeItem("gb.refreshed")}catch(e){}
-    if(!j.setup_done||!G.length)setTimeout(()=>openSetup(0),350);
+    // The page and the library are separate files now, so a stale page can no
+    // longer show a stale library and the reload-once workaround is gone.
+    loadLibrary().then(()=>{
+      if(!j.setup_done||!G.length)setTimeout(()=>openSetup(0),350);
+    });
     document.getElementById("stsrc").textContent=j.app+" "+j.version+" \u00b7 "+j.games+" games ready to launch";
-  }).catch(()=>{});return true}
+  }).catch(()=>{});
+  // The storage meter needs the machine's real disk capacity, not the
+  // author's. Ask once; renderRail() falls back until this lands.
+  if(api.drives)api.drives().then(d=>{
+    if(!d||!d.ok||!d.drives)return;
+    DISK.total=d.drives.reduce((a,x)=>a+(x.total||0),0);
+    DISK.used=d.drives.reduce((a,x)=>a+((x.total||0)-(x.free||0)),0);
+    renderRail();
+  }).catch(()=>{});
+  return true}
   return false;
 }
 window.addEventListener("pywebviewready",onBridgeReady);
@@ -1397,14 +1948,18 @@ function callApi(name,arg){
   return fetch("/api/"+name+"?id="+arg).then(r=>r.json());
 }
 function launchGame(id){
-  const g=byId(id);
+  const g=exactly(id);
+  if(!g){showToast("That game is no longer in the library — try a rescan");return}
   if(g.state==="err"){showToast("Cannot launch "+g.short+" \u2014 the install folder is empty");return}
   document.querySelectorAll('[data-play="'+id+'"]').forEach(el=>{el.classList.add("launching");
     setTimeout(()=>el.classList.remove("launching"),1400)});
   showToast("Starting "+g.short+"\u2026");
   if(BACKEND.on){
-    callApi("launch",id).then(j=>showToast((j.ok?"\u25b6 ":"\u2715 ")+g.short+" \u2014 "+j.msg))
-      .catch(e=>showToast("Could not launch: "+e));
+    callApi("launch",id).then(j=>{
+      showToast((j.ok?"\u25b6 ":"\u2715 ")+g.short+" \u2014 "+j.msg);
+      // the backend is now watching for the game to appear; follow along
+      if(j.ok)pollPlaying();
+    }).catch(e=>showToast("Could not launch: "+e));
   }else if(g.lurl){
     location.href=g.lurl;
     showToast("Handing "+g.short+" to "+(g.lurl.indexOf("steam")===0?"Steam":"the Epic launcher")+"\u2026");
@@ -1413,15 +1968,18 @@ function launchGame(id){
   }
 }
 function openFolder(id){
-  if(BACKEND.on)callApi("folder",id).then(j=>showToast(j.msg)).catch(()=>showToast(byId(id).path));
-  else showToast(byId(id).path);
+  const g=exactly(id);
+  if(!g){showToast("That game is no longer in the library");return}
+  if(BACKEND.on)callApi("folder",id).then(j=>showToast(j.msg)).catch(()=>showToast(g.path));
+  else showToast(g.path);
 }
-document.addEventListener("click",e=>{const f=e.target.closest("[data-folder]");if(f)openFolder(+f.dataset.folder)});
+document.addEventListener("click",e=>{const f=e.target.closest("[data-folder]");if(f)openFolder(f.dataset.folder)});
 
 /* native window controls - the title bar is the window chrome */
 const wbtn=(id,fn)=>{const el=document.getElementById(id);if(el)el.addEventListener("click",e=>{
   e.stopPropagation();const api=bridge();if(api&&api[fn])api[fn]();})};
 wbtn("wmin","minimize");wbtn("wmax","toggle_maximize");wbtn("wclose","close");
+document.getElementById("wfs").addEventListener("click",e=>{e.stopPropagation();setFullscreen(!inFullscreen())});
 document.querySelector(".tbar").addEventListener("dblclick",e=>{
   if(e.target.closest(".wbtns"))return;const api=bridge();if(api&&api.toggle_maximize)api.toggle_maximize();});
 
@@ -1441,7 +1999,7 @@ function openInspector(id,fromEl){
     <h2>${g.t}</h2><p class="hsub">${m.desc||g.note||""}</p>
     <div class="facts">
       <div><div class="k">SIZE</div><div class="v">${g.gb} GB</div></div>
-      <div><div class="k">LAST PLAYED</div><div class="v" style="font-size:.72cqw">${g.played||"Never"}</div></div>
+      <div><div class="k">${g.secs?"PLAYTIME":"LAST PLAYED"}</div><div class="v" style="font-size:.72cqw">${g.secs?hrs(g.secs):(g.played||"Never")}</div></div>
       <div><div class="k">DEVELOPER</div><div class="v" style="font-size:.68cqw">${m.dev||"—"}</div></div>
       <div><div class="k">RELEASED</div><div class="v" style="font-size:.68cqw">${m.rel||"—"}</div></div>
     </div>
@@ -1450,7 +2008,11 @@ function openInspector(id,fromEl){
       <button class="btn-play" type="button" data-play="${g.id}"><svg viewBox="0 0 24 24"><path d="M8 5l12 7-12 7z"/></svg>PLAY</button>
       <button class="btn2" id="flipbtn" type="button"><svg viewBox="0 0 24 24"><path d="M4 8a8 8 0 0 1 14-4M20 16a8 8 0 0 1-14 4"/><path d="M18 2v4h-4M6 22v-4h4"/></svg>Flip case</button>
     </div>
+    ${g.s==="emu"?`<div class="emupick" id="emupick"></div>`:""}
+    <div class="organise" id="organise"></div>
     <div class="inhint"><span class="kbd">Drag</span> rotate<span class="kbd">F</span> flip<span class="kbd">Esc</span> close</div>`;
+  if(g.s==="emu")renderEmuPicker(g.id);
+  renderOrganise(g.id);
   insp.classList.add("open");
   if(fromEl&&LS("motion",true)&&!matchMedia("(prefers-reduced-motion: reduce)").matches){
     const a=fromEl.getBoundingClientRect(),b=c.getBoundingClientRect();
@@ -1463,6 +2025,99 @@ function openInspector(id,fromEl){
   renderSide();
 }
 const closeInspector=()=>insp.classList.remove("open");
+
+/* ---------- organising a game ---------- */
+/* Where a game stops being whatever the scanner found and becomes yours: a
+   completion status, a score, tags and categories. All of it lives in the
+   library's "user" section, which no scan ever touches. */
+const COMPLETION=["Not played","Plan to play","Playing","On hold","Beaten","Completed","Abandoned"];
+
+/* Every tag and category in use, so the same one is easy to reuse rather than
+   retyped slightly differently. */
+const allTags=()=>[...new Set(G.flatMap(g=>g.tags||[]))].sort();
+const allCats=()=>[...new Set(G.flatMap(g=>g.cats||[]))].sort();
+
+function renderOrganise(id){
+  const box=document.getElementById("organise");
+  const g=byId(id);
+  if(!box||!g)return;
+  const chips=(list,kind)=>list.map(x=>
+    `<span class="ochip" data-${kind}-del="${id}" data-val="${esc(x)}">${x}<b>×</b></span>`).join("");
+  const known=(all,mine)=>all.filter(x=>!mine.includes(x)).slice(0,8);
+  box.innerHTML=`
+    <div class="orow">
+      <div class="k">STATUS</div>
+      <div class="osel">${COMPLETION.map(c=>
+        `<button type="button" class="obtn${g.done===c?" on":""}" data-done="${id}" data-val="${c}">${c}</button>`).join("")}</div>
+    </div>
+    <div class="orow">
+      <div class="k">YOUR SCORE${g.score!=null?` <span class="oscore">${g.score}</span>`:""}</div>
+      <input class="oscoreinput" type="range" min="0" max="100" step="5"
+             value="${g.score==null?0:g.score}" data-score="${id}">
+      ${g.score!=null?`<button type="button" class="oclear" data-score-clear="${id}">clear</button>`:""}
+    </div>
+    <div class="orow">
+      <div class="k">TAGS</div>
+      <div class="ochips">${chips(g.tags||[],"tag")}
+        <input class="otag" data-tag-add="${id}" placeholder="add a tag" list="taglist">
+      </div>
+      ${known(allTags(),g.tags||[]).length?`<div class="osugg">${
+        known(allTags(),g.tags||[]).map(x=>`<button type="button" class="osug" data-tag-add-now="${id}" data-val="${esc(x)}">${x}</button>`).join("")}</div>`:""}
+    </div>
+    <div class="orow">
+      <div class="k">CATEGORIES</div>
+      <div class="ochips">${chips(g.cats||[],"cat")}
+        <input class="otag" data-cat-add="${id}" placeholder="add a category" list="catlist">
+      </div>
+      ${known(allCats(),g.cats||[]).length?`<div class="osugg">${
+        known(allCats(),g.cats||[]).map(x=>`<button type="button" class="osug" data-cat-add-now="${id}" data-val="${esc(x)}">${x}</button>`).join("")}</div>`:""}
+    </div>
+    <div class="orow">
+      <div class="k">NOTE</div>
+      <textarea class="onote" data-note="${id}" rows="2"
+        placeholder="anything worth remembering about this game">${esc(g.note||"")}</textarea>
+    </div>`;
+}
+
+/* Add or remove one tag or category, and write it through. */
+function editList(id,field,value,remove){
+  const g=byId(id);
+  if(!g)return;
+  const key=field==="tags"?"tags":"cats";
+  const cur=(g[key]||[]).slice();
+  const v=String(value||"").trim();
+  if(!v)return;
+  const at=cur.findIndex(x=>x.toLowerCase()===v.toLowerCase());
+  if(remove){if(at<0)return;cur.splice(at,1)}
+  else{if(at>=0)return;cur.push(v)}
+  setUser(id,field==="tags"?{tags:cur}:{categories:cur});
+  renderOrganise(id);
+  render();
+}
+
+/* Which emulator opens this game. The scanner picks one from the file's
+   extension and the folder it sits in, but a .iso alone says nothing about
+   which console it is for - so where more than one installed emulator could
+   open it, the choice is offered rather than assumed. */
+function renderEmuPicker(id){
+  const box=document.getElementById("emupick");
+  const api=bridge();
+  if(!box||!api||!api.emulator_options)return;
+  api.emulator_options(id).then(j=>{
+    if(!j||!j.ok||!(j.options||[]).length){box.innerHTML="";return}
+    const cur=j.current||{};
+    const sel=o=>o.emulator===cur.emulator&&o.profile===cur.profile;
+    const chosen=j.options.find(sel);
+    box.innerHTML=`<div class="k">EMULATOR</div>
+      <div class="emurow">${j.options.map(o=>
+        `<button type="button" class="emubtn${sel(o)?" on":""}"
+          data-emu="${id}" data-emu-id="${o.emulator}" data-emu-prof="${o.profile}"
+          title="${o.exe}">${o.name}${o.platforms.length?
+            `<small>${o.platforms.join(", ")}</small>`:""}</button>`).join("")}</div>
+      <div class="emunote">${j.options.length===1?"The only emulator installed that opens this.":
+        chosen?"Pinned to this profile.":"Chosen automatically — pick another if it is wrong."}</div>`;
+  }).catch(()=>{});
+}
 document.getElementById("inclose").addEventListener("click",closeInspector);
 insp.addEventListener("mousedown",e=>{
   if(e.target.closest(".instage")){drag={x:e.clientX,y:e.clientY,ry,rx,moved:false};instage.classList.add("dragging")}
@@ -1572,11 +2227,12 @@ document.getElementById("setupnext").addEventListener("click",function(){
     closeSetup();
     if(SU.ran){
       showToast("Loading your library…");
-      // the scanner has rewritten this page; re-read it without closing the app
-      setTimeout(function(){
-        if(api&&api.reload)api.reload().catch(function(){location.reload()});
-        else location.reload();
-      },250);
+      // The scan wrote library.json, not this page, so there is nothing to
+      // reload - ask for the library again and redraw.
+      loadLibrary().then(function(ok){
+        go("home");
+        showToast(ok&&G.length?G.length+" games in your library":"Scan finished");
+      });
     }else{go("home");showToast("Setup complete")}
   }
 });
@@ -1608,6 +2264,17 @@ document.addEventListener("click",function(e){
 });
 document.addEventListener("keydown",function(e){
   if(e.target.id==="profname"&&e.key==="Enter"){e.target.blur();saveProfile({name:e.target.value});showToast("Saved \u2014 hello, "+profName())}
+  // Enter commits a typed tag or category; Escape gives up on it rather than
+  // closing the inspector out from under whoever is typing.
+  const ti=e.target.closest&&e.target.closest("[data-tag-add],[data-cat-add]");
+  if(ti&&e.key==="Enter"){
+    e.preventDefault();
+    const isTag=!!ti.dataset.tagAdd;
+    editList(isTag?ti.dataset.tagAdd:ti.dataset.catAdd,isTag?"tags":"cats",ti.value,false);
+    const again=document.querySelector(isTag?"[data-tag-add]":"[data-cat-add]");
+    if(again){again.value="";again.focus()}
+  }
+  if(ti&&e.key==="Escape"){e.stopPropagation();ti.value="";ti.blur()}
 });
 document.getElementById("setupskip").addEventListener("click",function(){
   const api=bridge();if(api&&api.settings_set)api.settings_set({setup_done:true});
@@ -1624,6 +2291,5 @@ function showToast(t){document.getElementById("toasttx").textContent=t;toast.cla
 if(typeof window.pywebview!=="undefined")document.body.classList.add("native");
 applySettings();
 COLLECTIONS=buildCollections();
-S.sel=G.length?(G.find(g=>g.played)||G[0]).id:-1;
-render();
+render();          // draws empty; loadLibrary() redraws when the bridge answers
 </script>

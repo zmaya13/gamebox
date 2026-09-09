@@ -3,7 +3,7 @@
 Unicode true
 
 !define APP      "GameBox"
-!define VERSION  "1.2.3"
+!define VERSION  "1.3.0"
 !define PUBLISHER "GameBox contributors"
 !define WEBSITE  "https://github.com/zmaya13/gamebox"
 
@@ -37,15 +37,20 @@ Section "GameBox" SecMain
   SectionIn RO
   SetOutPath "$INSTDIR"
   File "GameBox.exe"
-  ; The page carries the library the scanner writes into it, so an upgrade must
-  ; not overwrite it. Ship a blank copy; the app seeds GameBox.html from it the
-  ; first time it runs.
-  File "/oname=GameBox.blank.html" "GameBox.html"
+  ; The library lives in library.json now, not inside the page, so the page is
+  ; just program code and an upgrade can replace it like any other file. That
+  ; retires the GameBox.blank.html copy-on-first-run dance this used to need.
+  File "GameBox.html"
   File "GameBox.ico"
   File "scan-library.py"
+  File "library.py"
+  File "emulators.py"
+  File "playtime.py"
+  File "stores.py"
+  File "emulators.json"
+  File "migrate.py"
   File "README.md"
   File "LICENSE"
-  File /nonfatal "launch.json"
 
   CreateShortcut "$SMPROGRAMS\GameBox.lnk" "$INSTDIR\GameBox.exe" "" "$INSTDIR\GameBox.ico" 0
   CreateShortcut "$DESKTOP\GameBox.lnk"    "$INSTDIR\GameBox.exe" "" "$INSTDIR\GameBox.ico" 0
@@ -65,33 +70,44 @@ SectionEnd
 Section "Uninstall"
   ; --- the app itself
   Delete "$INSTDIR\GameBox.exe"
-  Delete "$INSTDIR\GameBox.blank.html"
+  Delete "$INSTDIR\GameBox.html"
+  Delete "$INSTDIR\GameBox.blank.html"   ; left by an install from before 1.3.0
   Delete "$INSTDIR\GameBox.ico"
   Delete "$INSTDIR\scan-library.py"
+  Delete "$INSTDIR\library.py"
+  Delete "$INSTDIR\emulators.py"
+  Delete "$INSTDIR\playtime.py"
+  Delete "$INSTDIR\stores.py"
+  Delete "$INSTDIR\emulators.json"
+  Delete "$INSTDIR\migrate.py"
   Delete "$INSTDIR\README.md"
+  Delete "$INSTDIR\selftest.log"
   Delete "$INSTDIR\LICENSE"
   Delete "$SMPROGRAMS\GameBox.lnk"
   Delete "$DESKTOP\GameBox.lnk"
   DeleteRegKey HKCU "Software\${APP}"
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP}"
 
-  ; --- your data: the scanned library and its artwork, the launch table, your
-  ;     name and settings, and the browser profile holding favourites and
-  ;     hidden games. Removed unless you say otherwise; a silent uninstall
+  ; --- your data: library.json (the library, and everything you recorded about
+  ;     your games), its artwork and backups, your name and settings, and the
+  ;     browser profile. Removed unless you say otherwise; a silent uninstall
   ;     removes it without asking.
   StrCpy $0 "yes"
   IfSilent remove_data
   MessageBox MB_YESNO|MB_ICONQUESTION \
-    "Also remove your GameBox data?$\r$\n$\r$\nThis deletes the scanned library and its artwork, your name and settings, favourites and hidden games, and the window size GameBox remembers.$\r$\n$\r$\nYour games themselves are not touched - only what GameBox wrote about them." \
+    "Also remove your GameBox data?$\r$\n$\r$\nThis deletes the scanned library and its artwork, everything you recorded about your games - favourites, tags, notes, playtime - your name and settings, and the window size GameBox remembers.$\r$\n$\r$\nYour games themselves are not touched - only what GameBox wrote about them." \
     IDYES remove_data
   StrCpy $0 "no"
 
 remove_data:
   StrCmp $0 "yes" 0 keep_data
-  Delete "$INSTDIR\GameBox.html"
-  Delete "$INSTDIR\launch.json"
+  Delete "$INSTDIR\library.json"
   Delete "$INSTDIR\gamebox-settings.json"
   Delete "$INSTDIR\emulators.json"
+  Delete "$INSTDIR\launch.json"          ; retired in 1.3.0, folded into the library
+  Delete "$INSTDIR\GameBox.pre-1.3.html" ; the page an upgrade migrated from
+  RMDir /r "$INSTDIR\art"
+  RMDir /r "$INSTDIR\library-backups"
   ; The WebView2 profile is usually still locked by the browser process that is
   ; only now shutting down, so give it a few tries rather than leaving it.
   StrCpy $1 0

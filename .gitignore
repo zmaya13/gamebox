@@ -9,6 +9,9 @@ GameBox.exe
 GameBox-Setup-*.exe
 GameBox-v1-backup.html
 
-# a scanned GameBox.html holds your own library and
-# publisher artwork - keep it local
+# your library and the publisher artwork it refers to - keep both local
+/art/
+/library-backups/
+/gamebox-settings.json
+/emulators.json
 /GameBox.local.html
